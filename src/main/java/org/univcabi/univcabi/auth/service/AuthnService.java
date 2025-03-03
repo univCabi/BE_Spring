@@ -1,12 +1,13 @@
-package org.univcabi.auth.service;
+package org.univcabi.univcabi.auth.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.univcabi.auth.dto.AuthnRequestDto;
-import org.univcabi.auth.dto.AuthnResponseDto;
-import org.univcabi.auth.entity.Authn;
-import org.univcabi.auth.entity.AuthnRole;
-import org.univcabi.auth.repository.AuthnRepository;
+import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
+import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
+import org.univcabi.univcabi.auth.entity.Authn;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
+import org.univcabi.univcabi.auth.repository.AuthnRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -36,12 +37,14 @@ public class AuthnService {
                 .studentNumber("202213185")
                 .password("202213185")
                 .role(AuthnRole.NORMAL)
+                .deletedAt(null)
                 .build();
 
         authnRepository.save(newUser);
 
     }
 
+    @Transactional
     public void deleteUser(String studentNumber){
 //        authnRepository.deleteByStudentNumber(studentNumber);
         // Test 용

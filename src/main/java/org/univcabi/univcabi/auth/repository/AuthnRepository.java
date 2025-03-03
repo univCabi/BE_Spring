@@ -1,10 +1,12 @@
-package org.univcabi.auth.repository;
+package org.univcabi.univcabi.auth.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.univcabi.auth.entity.Authn;
+import org.springframework.stereotype.Repository;
+import org.univcabi.univcabi.auth.entity.Authn;
 
 import java.util.Optional;
 
+@Repository
 public interface AuthnRepository extends JpaRepository<Authn, Long> {
 
     // 조회

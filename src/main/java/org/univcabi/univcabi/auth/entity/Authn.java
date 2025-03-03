@@ -1,4 +1,4 @@
-package org.univcabi.auth.entity;
+package org.univcabi.univcabi.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,8 +34,9 @@ public class Authn {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(nullable = false)
-    private LocalDateTime deletedAt;
+    @Column(nullable = true)
+    @Builder.Default
+    private LocalDateTime deletedAt =null;
 
     @PrePersist // 자동 현재 시간 저장
     public void prePersist(){
