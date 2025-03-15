@@ -6,34 +6,34 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-
-
-import java.security.Key;
-import java.util.Date;
+import javax.crypto.SecretKey;
+import java.util.*;
 
 @Slf4j
 @Component
 public class JwtTokenProvider {
-    private final Key key;
+    private final SecretKey key;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey,
                             @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
                             @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration) {
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        this.key = Keys.hmacShaKeyFor(Arrays.copyOf(secretKey.getBytes(), 32));
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
+
     }
 
     private String createToken(String studentNumber, String role, long expirationTime) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
-        Claims claims = Jwts.claims().issuedAt(now).subject(studentNumber).build();
-        if (role != null) {
-            claims.put("role", role);
-        }
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub",studentNumber);
+        claims.put("iat",now);
+
+        Optional.ofNullable(role).ifPresent((String r) -> claims.put("role", r));
 
         return Jwts.builder()
                 .claims(claims)
@@ -53,7 +53,10 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().build().parseSignedClaims(token);
+            Jwts.parser()
+                    .verifyWith((SecretKey) key)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
             log.warn("만료된 JWT: {}", e.getMessage());
@@ -64,7 +67,9 @@ public class JwtTokenProvider {
     }
 
     public String getStudentNumberFromToken(String token) {
+
         return Jwts.parser()
+                .verifyWith((SecretKey) key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
@@ -73,6 +78,7 @@ public class JwtTokenProvider {
 
     public Date getExpirationDate(String token) {
         return Jwts.parser()
+                .verifyWith((SecretKey) key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
