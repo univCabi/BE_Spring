@@ -4,6 +4,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,6 +58,32 @@ public class AuthnController {
         }catch (Exception e){
             return ResponseEntity.status(500).body(AuthnResponseDto.builder().message("서버 오류").build());
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletResponse response){
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!(principal instanceof UserDetails)){
+            return ResponseEntity.status(401).body("유효하지 않은 사용자입니다.");
+        }
+
+        UserDetails userDetails = (UserDetails) principal;
+        String studentNumber = userDetails.getUsername();
+
+        authnService.deleteRefreshToken(studentNumber);
+
+        deleteCookie(response,"access_token");
+        deleteCookie(response,"refresh_token");
+
+        return ResponseEntity.ok("로그아웃 성공");
+    }
+
+    private  void deleteCookie(HttpServletResponse response,String cookieName){
+        Cookie cookie = new Cookie(cookieName,null);
+        cookie.setMaxAge(0); // 쿠키 만료 -> 브라우저는 만료된 쿠키 삭제
+        cookie.setPath("/");
+        response.addCookie(cookie);
     }
 
     @PostMapping("/delete")

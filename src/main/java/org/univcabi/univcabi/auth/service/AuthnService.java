@@ -2,6 +2,7 @@ package org.univcabi.univcabi.auth.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
 import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
@@ -15,6 +16,7 @@ import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 public class AuthnService {
 
     private final AuthnRepository authnRepository;
+    private StringRedisTemplate redisTemplate;
 
     public AuthnResponseDto login(AuthnRequestDto requestDto){
         Authn authn = authnRepository.findByStudentNumber(requestDto.getStudentNumber())
@@ -28,6 +30,10 @@ public class AuthnService {
                 .studentNumber(authn.getStudentNumber())
                 .message("로그인 성공")
                 .build();
+    }
+
+    public void deleteRefreshToken(String studentNumber){
+        redisTemplate.delete("refresh:"+studentNumber); // refresh:학생번호 형식의 데이터 삭제
     }
 
     public void createUser(AuthnRequestDto requestDto) {
