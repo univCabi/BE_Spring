@@ -26,7 +26,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/authn/login").permitAll() //로그인 api는 인증 없이 가능
+                        .requestMatchers("/authn/login","/authn/create","/authn/delete").permitAll() //로그인 api는 인증 없이 가능
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,userDetailsService),
                         UsernamePasswordAuthenticationFilter.class); // JWT 인증 필터 추가

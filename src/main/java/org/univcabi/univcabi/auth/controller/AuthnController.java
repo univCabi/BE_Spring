@@ -1,5 +1,7 @@
 package org.univcabi.univcabi.auth.controller;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
 import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
+import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
 
 @RestController
@@ -16,6 +19,7 @@ import org.univcabi.univcabi.auth.service.AuthnService;
 public class AuthnController {
 
     private final AuthnService authnService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/create")
     public ResponseEntity<String> createUser(){
@@ -24,17 +28,33 @@ public class AuthnController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnRequestDto requestDto){
+    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnRequestDto requestDto, HttpServletResponse response){
         try{
             AuthnResponseDto responseDto = authnService.login(requestDto);
+
+            String accessToken = jwtTokenProvider.generateAccessToken(responseDto.getStudentNumber(),"USER");
+            String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
+
+            Cookie accessTokenCookie = new Cookie("access_token",accessToken);
+            Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
+            accessTokenCookie.setHttpOnly(true);
+            accessTokenCookie.setSecure(true);
+            accessTokenCookie.setPath("/");
+
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setSecure(true);
+            refreshTokenCookie.setPath("/");
+
+            response.addCookie(accessTokenCookie);
+            response.addCookie(refreshTokenCookie);
+
             return ResponseEntity.ok(responseDto);
         } catch (IllegalArgumentException e){
-            return ResponseEntity.status(404).body(new AuthnResponseDto("존재하지 않는 유저입니다."));
+            return ResponseEntity.status(404).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
         }catch (SecurityException e){
-            return ResponseEntity.status(400).body(new AuthnResponseDto("비밀번호가 옳바르지 않습니다."));
-
+            return ResponseEntity.status(400).body(AuthnResponseDto.builder().message("비밀번호가 옳바르지 않습니다.").build());
         }catch (Exception e){
-            return ResponseEntity.status(500).body(new AuthnResponseDto("서버 오류"));
+            return ResponseEntity.status(500).body(AuthnResponseDto.builder().message("서버 오류").build());
         }
     }
 

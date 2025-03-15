@@ -1,10 +1,11 @@
 package org.univcabi.univcabi.auth.dto;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
+@Builder
 public class AuthnResponseDto {
     private String message; // 응답 메세지 반환
+    private String studentNumber;
 }
