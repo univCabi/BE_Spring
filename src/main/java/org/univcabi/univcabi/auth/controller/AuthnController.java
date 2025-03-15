@@ -37,6 +37,8 @@ public class AuthnController {
             String accessToken = jwtTokenProvider.generateAccessToken(responseDto.getStudentNumber(),"USER");
             String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
 
+            authnService.storeRefreshToken(requestDto.getStudentNumber(),refreshToken);
+
             Cookie accessTokenCookie = new Cookie("access_token",accessToken);
             Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
             accessTokenCookie.setHttpOnly(true);
