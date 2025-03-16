@@ -12,6 +12,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.univcabi.univcabi.auth.security.JwtAuthenticationFilter;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.security.CustomUserDetailsService;
+import org.univcabi.univcabi.auth.service.TokenService;
 
 @Configuration
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private final TokenService tokenService;
 
 
     @Bean
@@ -32,9 +34,12 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable()) // CSRF 비활성화
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/authn/login","/authn/create","/authn/delete").permitAll() //로그인 api는 인증 없이 가능
+                        .requestMatchers("/authn/login",
+                                "/authn/create",
+                                "/authn/delete",
+                                "/authn/token.access").permitAll() //로그인 api는 인증 없이 가능
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,customUserDetailsService),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,customUserDetailsService,tokenService),
                         UsernamePasswordAuthenticationFilter.class); // JWT 인증 필터 추가
 
         return http.build();
