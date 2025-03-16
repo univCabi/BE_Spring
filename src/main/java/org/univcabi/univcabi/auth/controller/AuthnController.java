@@ -37,7 +37,7 @@ public class AuthnController {
             String accessToken = jwtTokenProvider.generateAccessToken(responseDto.getStudentNumber(),"USER");
             String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
 
-            authnService.storeRefreshToken(requestDto.getStudentNumber(),refreshToken);
+            authnService.storeRefreshToken(responseDto.getStudentNumber(),refreshToken);
 
             Cookie accessTokenCookie = new Cookie("access_token",accessToken);
             Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
@@ -64,6 +64,10 @@ public class AuthnController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletResponse response){
+        if(SecurityContextHolder.getContext().getAuthentication()==null) {
+            return ResponseEntity.status(400).body("인증되지 않은 요청입니다.");
+        }
+
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if(!(principal instanceof UserDetails)){
@@ -72,6 +76,8 @@ public class AuthnController {
 
         UserDetails userDetails = (UserDetails) principal;
         String studentNumber = userDetails.getUsername();
+
+        SecurityContextHolder.clearContext();
 
         authnService.deleteRefreshToken(studentNumber);
 

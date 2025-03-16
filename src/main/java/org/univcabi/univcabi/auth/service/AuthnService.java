@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class AuthnService {
 
     private final AuthnRepository authnRepository;
-    private StringRedisTemplate redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${jwt.refresh-token-expiration}") private long refreshTokenExpiration;
 
