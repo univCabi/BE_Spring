@@ -64,7 +64,6 @@ public class TokenService {
     }
 
     public void setAccessTokenToCookie(HttpServletResponse response,String accessToken){
-        clearAccessTokenToCookie(response);
         setCookie(response,accessToken,"access_token");
     }
 

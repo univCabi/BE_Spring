@@ -28,7 +28,7 @@ public class TokenController {
         String storedToken = tokenService.getRefreshToken(studentNumber);
 
         String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber,"USER");
-        tokenService.setRefreshTokenToCookie(response,newAccessToken);
+        tokenService.setAccessTokenToCookie(response,newAccessToken);
 
         return ResponseEntity.ok("새로운 Access Token 발급 완료");
     }

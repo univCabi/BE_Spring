@@ -60,6 +60,7 @@ public class JwtTokenProvider {
             return true;
         } catch (ExpiredJwtException e) {
             log.warn("만료된 JWT: {}", e.getMessage());
+            throw e;
         } catch (JwtException e) {
             log.warn("유효하지 않은 JWT: {}", e.getMessage());
         }

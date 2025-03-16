@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.auth.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,30 +33,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-       if(token != null){
-           if(jwtTokenProvider.validateToken(token)){
-               authenticateUser(token);
-           }
-           else if(jwtTokenProvider.isTokenExpired(token)){
-               log.info("AccessToken 만료");
+        if (token != null) {
+            try {
+                if (jwtTokenProvider.validateToken(token)) {
+                    authenticateUser(token);
+                }
+            } catch (ExpiredJwtException e) {
+                log.warn("AccessToken이 만료됨. RefreshToken으로 재발급 시도");
 
-               String refreshToken = tokenService.getRefreshTokenFromCookie(request);
-               if(refreshToken!=null && jwtTokenProvider.validateToken(refreshToken)){
-                   RestTemplate restTemplate = new RestTemplate();
-                   String url = "http://localhost:8080/authn/token/access";
-                   ResponseEntity<String> responseEntity = restTemplate.postForEntity(
-                           url,null,String.class);
-                   if(responseEntity.getStatusCode().is2xxSuccessful()){
-                       log.info("새로운 AccessToken 발급");
+                String refreshToken = tokenService.getRefreshTokenFromCookie(request);
+                if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
+                    String studentNumber = jwtTokenProvider.getStudentNumberFromToken(refreshToken);
+                    String storedRefreshToken = tokenService.getRefreshToken(studentNumber);
 
-                       authenticateUser(responseEntity.getBody());
-                   }
-               }
+                    if (refreshToken.equals(storedRefreshToken)) {
+                        String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber, "USER");
 
-           }
-       }
 
-        filterChain.doFilter(request,response);
+                        tokenService.setAccessTokenToCookie(response, newAccessToken);
+                        log.info("새로운 AccessToken 발급 및 쿠키 저장 완료");
+
+                        authenticateUser(newAccessToken);
+                    } else {
+                        log.error("RefreshToken이 유효하지 않음. 재발급 불가");
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh Token이 유효하지 않음");
+                        return;
+                    }
+                } else {
+                    log.error("RefreshToken이 존재하지 않거나 유효하지 않음.");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh Token이 유효하지 않음");
+                    return;
+                }
+            }
+        }
+
+        filterChain.doFilter(request, response);
     }
 
     private void authenticateUser(String token) {
