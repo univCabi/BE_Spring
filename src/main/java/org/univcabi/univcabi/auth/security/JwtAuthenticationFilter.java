@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.v4.runtime.Token;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                    ResponseEntity<String> responseEntity = restTemplate.postForEntity(
                            url,null,String.class);
                    if(responseEntity.getStatusCode().is2xxSuccessful()){
-                       log.info("새로운 Access Token 발급");
+                       log.info("새로운 AccessToken 발급");
 
                        authenticateUser(responseEntity.getBody());
                    }

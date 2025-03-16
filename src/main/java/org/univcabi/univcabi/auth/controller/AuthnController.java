@@ -3,6 +3,7 @@ package org.univcabi.univcabi.auth.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +17,7 @@ import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
 
+@Slf4j
 @RestController
 @RequestMapping("/authn")
 @RequiredArgsConstructor

@@ -49,8 +49,8 @@ public class TokenService {
     // 쿠키 저장
     private void setCookie(HttpServletResponse response,String accessToken, String name){
         Cookie cookie = new Cookie(name,accessToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setHttpOnly(false);
+        cookie.setSecure(false);
         cookie.setPath("/");
         response.addCookie(cookie);
     }
@@ -64,6 +64,7 @@ public class TokenService {
     }
 
     public void setAccessTokenToCookie(HttpServletResponse response,String accessToken){
+        clearAccessTokenToCookie(response);
         setCookie(response,accessToken,"access_token");
     }
 

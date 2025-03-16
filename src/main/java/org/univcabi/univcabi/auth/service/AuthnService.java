@@ -2,17 +2,13 @@ package org.univcabi.univcabi.auth.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
 import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
-import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
