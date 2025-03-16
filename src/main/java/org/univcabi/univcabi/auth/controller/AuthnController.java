@@ -14,6 +14,7 @@ import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
 import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
+import org.univcabi.univcabi.auth.service.TokenService;
 
 @RestController
 @RequestMapping("/authn")
@@ -21,6 +22,7 @@ import org.univcabi.univcabi.auth.service.AuthnService;
 public class AuthnController {
 
     private final AuthnService authnService;
+    private final TokenService tokenService;
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/create")
@@ -37,20 +39,10 @@ public class AuthnController {
             String accessToken = jwtTokenProvider.generateAccessToken(responseDto.getStudentNumber(),"USER");
             String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
 
-            authnService.storeRefreshToken(responseDto.getStudentNumber(),refreshToken);
+            tokenService.storeRefreshToken(responseDto.getStudentNumber(),refreshToken);
 
-            Cookie accessTokenCookie = new Cookie("access_token",accessToken);
-            Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-            accessTokenCookie.setHttpOnly(true);
-            accessTokenCookie.setSecure(true);
-            accessTokenCookie.setPath("/");
-
-            refreshTokenCookie.setHttpOnly(true);
-            refreshTokenCookie.setSecure(true);
-            refreshTokenCookie.setPath("/");
-
-            response.addCookie(accessTokenCookie);
-            response.addCookie(refreshTokenCookie);
+            tokenService.setAccessTokenToCookie(response,accessToken);
+            tokenService.setRefreshTokenToCookie(response,refreshToken);
 
             return ResponseEntity.ok(responseDto);
         } catch (IllegalArgumentException e){
@@ -79,10 +71,10 @@ public class AuthnController {
 
         SecurityContextHolder.clearContext();
 
-        authnService.deleteRefreshToken(studentNumber);
+        tokenService.deleteRefreshToken(studentNumber);
 
-        deleteCookie(response,"access_token");
-        deleteCookie(response,"refresh_token");
+        tokenService.clearAccessTokenToCookie(response);
+        tokenService.clearRefreshTokenToCookie(response);
 
         return ResponseEntity.ok("로그아웃 성공");
     }

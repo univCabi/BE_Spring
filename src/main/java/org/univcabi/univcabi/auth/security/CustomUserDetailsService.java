@@ -1,4 +1,4 @@
-package org.univcabi.univcabi.auth.service;
+package org.univcabi.univcabi.auth.security;
 
 
 import lombok.RequiredArgsConstructor;

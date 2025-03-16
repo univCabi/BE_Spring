@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.univcabi.univcabi.auth.security.JwtAuthenticationFilter;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
-import org.univcabi.univcabi.auth.service.CustomUserDetailsService;
+import org.univcabi.univcabi.auth.security.CustomUserDetailsService;
 
 @Configuration
 @RequiredArgsConstructor

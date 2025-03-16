@@ -19,9 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class AuthnService {
 
     private final AuthnRepository authnRepository;
-    private final StringRedisTemplate redisTemplate;
 
-    @Value("${jwt.refresh-token-expiration}") private long refreshTokenExpiration;
 
     public AuthnResponseDto login(AuthnRequestDto requestDto){
         Authn authn = authnRepository.findByStudentNumber(requestDto.getStudentNumber())
@@ -37,13 +35,6 @@ public class AuthnService {
                 .build();
     }
 
-    public void storeRefreshToken(String studentNumber, String refreshToken){
-        redisTemplate.opsForValue().set("refresh:"+studentNumber,refreshToken,refreshTokenExpiration, TimeUnit.MILLISECONDS);
-    }
-
-    public void deleteRefreshToken(String studentNumber){
-        redisTemplate.delete("refresh:"+studentNumber); // refresh:학생번호 형식의 데이터 삭제
-    }
 
     public void createUser(AuthnRequestDto requestDto) {
 
