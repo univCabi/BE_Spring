@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber, "USER");
 
 
-                        tokenService.setAccessTokenToCookie(response, newAccessToken);
+                        response.setHeader("Authorization","Bearer "+newAccessToken);
                         log.info("새로운 AccessToken 발급 및 쿠키 저장 완료");
 
                         authenticateUser(newAccessToken);

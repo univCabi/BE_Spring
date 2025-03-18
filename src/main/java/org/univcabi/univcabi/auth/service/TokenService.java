@@ -50,7 +50,7 @@ public class TokenService {
     private void setCookie(HttpServletResponse response,String accessToken, String name){
         Cookie cookie = new Cookie(name,accessToken);
         cookie.setHttpOnly(false);
-        cookie.setSecure(false);
+        cookie.setSecure(true);
         cookie.setPath("/");
         response.addCookie(cookie);
     }
@@ -63,19 +63,13 @@ public class TokenService {
         response.addCookie(cookie);
     }
 
-    public void setAccessTokenToCookie(HttpServletResponse response,String accessToken){
-        setCookie(response,accessToken,"access_token");
-    }
 
     public void setRefreshTokenToCookie(HttpServletResponse response,String refreshToken){
-        setCookie(response,refreshToken,"refresh_token");
+        setCookie(response,refreshToken,"refreshToken");
     }
 
-    public void clearAccessTokenToCookie(HttpServletResponse response){
-        clearCookie(response,"access_token");
-    }
 
     public void clearRefreshTokenToCookie(HttpServletResponse response){
-        clearCookie(response,"refresh_token");
+        clearCookie(response,"refreshToken");
     }
 }

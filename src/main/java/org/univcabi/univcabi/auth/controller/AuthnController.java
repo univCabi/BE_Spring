@@ -42,11 +42,13 @@ public class AuthnController {
             String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
 
             tokenService.storeRefreshToken(responseDto.getStudentNumber(),refreshToken);
-
-            tokenService.setAccessTokenToCookie(response,accessToken);
             tokenService.setRefreshTokenToCookie(response,refreshToken);
 
+            responseDto.setAccessToken(accessToken);
+
             return ResponseEntity.ok(responseDto);
+
+
         } catch (IllegalArgumentException e){
             return ResponseEntity.status(404).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
         }catch (SecurityException e){
@@ -74,18 +76,9 @@ public class AuthnController {
         SecurityContextHolder.clearContext();
 
         tokenService.deleteRefreshToken(studentNumber);
-
-        tokenService.clearAccessTokenToCookie(response);
         tokenService.clearRefreshTokenToCookie(response);
 
         return ResponseEntity.ok("로그아웃 성공");
-    }
-
-    private  void deleteCookie(HttpServletResponse response,String cookieName){
-        Cookie cookie = new Cookie(cookieName,null);
-        cookie.setMaxAge(0); // 쿠키 만료 -> 브라우저는 만료된 쿠키 삭제
-        cookie.setPath("/");
-        response.addCookie(cookie);
     }
 
     @PostMapping("/delete")
