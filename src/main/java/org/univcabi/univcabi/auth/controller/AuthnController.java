@@ -1,16 +1,13 @@
 package org.univcabi.univcabi.auth.controller;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
 import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
@@ -30,11 +27,11 @@ public class AuthnController {
     @PostMapping("/create")
     public ResponseEntity<String> createUser(){
         authnService.createUser(null); // Test 를 위해 null 사용
-        return ResponseEntity.status(201).body("회원 생성 성공");
+        return ResponseEntity.ok("회원 생성 성공");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnRequestDto requestDto, HttpServletResponse response){
+    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnRequestDto requestDto){
         try{
             AuthnResponseDto responseDto = authnService.login(requestDto);
 
@@ -42,15 +39,20 @@ public class AuthnController {
             String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
 
             tokenService.storeRefreshToken(responseDto.getStudentNumber(),refreshToken);
-            tokenService.setRefreshTokenToCookie(response,refreshToken);
 
-            responseDto.setAccessToken(accessToken);
+            ResponseCookie refreshCookie = tokenService.createRefreshTokenCookie(refreshToken);
 
-            return ResponseEntity.ok(responseDto);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE,refreshCookie.toString())
+                    .body(AuthnResponseDto.builder()
+                            .studentNumber(responseDto.getStudentNumber())
+                            .message("로그인 성공")
+                            .accessToken(accessToken)
+                            .build());
 
 
         } catch (IllegalArgumentException e){
-            return ResponseEntity.status(404).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
+            return ResponseEntity.status(400).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
         }catch (SecurityException e){
             return ResponseEntity.status(400).body(AuthnResponseDto.builder().message("비밀번호가 옳바르지 않습니다.").build());
         }catch (Exception e){
@@ -59,9 +61,9 @@ public class AuthnController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletResponse response){
+    public ResponseEntity<String> logout(){
         if(SecurityContextHolder.getContext().getAuthentication()==null) {
-            return ResponseEntity.status(400).body("인증되지 않은 요청입니다.");
+            return ResponseEntity.badRequest().body("인증되지 않은 요청입니다.");
         }
 
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -76,14 +78,22 @@ public class AuthnController {
         SecurityContextHolder.clearContext();
 
         tokenService.deleteRefreshToken(studentNumber);
-        tokenService.clearRefreshTokenToCookie(response);
 
-        return ResponseEntity.ok("로그아웃 성공");
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken","")
+                .httpOnly(false)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE,deleteCookie.toString())
+                .body("로그아웃 성공");
     }
 
     @PostMapping("/delete")
     public  ResponseEntity<String> deleteUser(){
         authnService.deleteUser(null);
-        return ResponseEntity.status(201).body("회원 삭제 성공");
+        return ResponseEntity.ok("회원 삭제 성공");
     }
 }

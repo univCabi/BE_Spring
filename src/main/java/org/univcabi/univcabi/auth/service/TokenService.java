@@ -6,8 +6,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -34,11 +36,19 @@ public class TokenService {
         redisTemplate.delete("refresh:"+studentNumber); // refresh:학생번호 형식의 데이터 삭제
     }
 
-    // 쿠키에서 refresh 토큰 가져오기
-    public String getRefreshTokenFromCookie(HttpServletRequest request){
-        if(request.getCookies() != null){
-            for(Cookie cookie : request.getCookies()){
-                if(cookie.getName().equals("refresh_token")){
+    public ResponseCookie createRefreshTokenCookie(String refreshToken){
+        return ResponseCookie.from("refreshToken",refreshToken)
+                .httpOnly(false)
+                .secure(false)
+                .path("/")
+                .maxAge(refreshTokenExpiration)
+                .build();
+    }
+
+    public String getRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals("refreshToken")) {
                     return cookie.getValue();
                 }
             }
@@ -46,30 +56,4 @@ public class TokenService {
         return null;
     }
 
-    // 쿠키 저장
-    private void setCookie(HttpServletResponse response,String accessToken, String name){
-        Cookie cookie = new Cookie(name,accessToken);
-        cookie.setHttpOnly(false);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        response.addCookie(cookie);
-    }
-
-    // 쿠키 삭제
-    private void clearCookie(HttpServletResponse response,String name){
-        Cookie cookie = new Cookie(name,null);
-        cookie.setMaxAge(0); // 쿠키 만료 -> 브라우저는 만료된 쿠키 삭제
-        cookie.setPath("/");
-        response.addCookie(cookie);
-    }
-
-
-    public void setRefreshTokenToCookie(HttpServletResponse response,String refreshToken){
-        setCookie(response,refreshToken,"refreshToken");
-    }
-
-
-    public void clearRefreshTokenToCookie(HttpServletResponse response){
-        clearCookie(response,"refreshToken");
-    }
 }
