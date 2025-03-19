@@ -9,11 +9,13 @@ import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 
+
 @Service
 @RequiredArgsConstructor
 public class AuthnService {
 
-    private  final AuthnRepository authnRepository;
+    private final AuthnRepository authnRepository;
+
 
     public AuthnResponseDto login(AuthnRequestDto requestDto){
         Authn authn = authnRepository.findByStudentNumber(requestDto.getStudentNumber())
@@ -23,16 +25,15 @@ public class AuthnService {
             throw new SecurityException("비밀번호 불일치");
         }
 
-        return  new AuthnResponseDto("로그인 성공");
+        return AuthnResponseDto.builder()
+                .studentNumber(authn.getStudentNumber())
+                .message("로그인 성공")
+                .build();
     }
 
+
     public void createUser(AuthnRequestDto requestDto) {
-//        Authn newUser = Authn.builder()
-//                .studentNumber(requestDto.getStudentNumber())
-//                .password(requestDto.getPassword())
-//                .role(AuthnRole.NORMAL)
-//                .build();
-        // Test 용
+
         Authn newUser = Authn.builder()
                 .studentNumber("202213185")
                 .password("202213185")
