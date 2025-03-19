@@ -1,6 +1,7 @@
 package org.univcabi.univcabi.cabinet.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.cabinet.dto.response.*;
@@ -22,73 +23,73 @@ public class CabinetController {
     @GetMapping("/all")
     public ResponseEntity<?> findAllCabinetInfo(@ModelAttribute @Valid CabinetFindAllInfoRequestDto cabinetFindAllInfoRequestDto) {
         // DTO를 VO로 변환 (Builder 패턴 적용)
-        CabinetFindAllVO cabinetFindAllVO = CabinetFindAllVO.builder()
+        CabinetFindAllVo cabinetFindAllVo = CabinetFindAllVo.builder()
                 .page(cabinetFindAllInfoRequestDto.getPage())
                 .size(cabinetFindAllInfoRequestDto.getPageSize())
                 .build();
 
-        CabinetFindAllInfoResponseDto cabinetFindAllInfoResponseDto = cabinetService.findAllCabinetInfo(cabinetFindAllVO);
+        Page<CabinetFindAllInfoResponseDto> cabinetFindAllInfoResponseDto = cabinetService.findAllCabinetInfo(cabinetFindAllVo);
         return ResponseEntity.ok(cabinetFindAllInfoResponseDto);
     }
 
     @GetMapping("/detail")
     public ResponseEntity<?> findOneCabinetInfo(@ModelAttribute @Valid CabinetFindOneInfoRequestDto cabinetFindOneInfoRequestDto) {
-        CabinetDetailVO cabinetDetailVO = CabinetDetailVO.builder()
+        CabinetDetailVo cabinetDetailVo = CabinetDetailVo.builder()
                 .cabinetId(cabinetFindOneInfoRequestDto.getCabinetId())
                 .build();
 
-        CabinetFindOneInfoResponseDto cabinetFindOneInfoResponseDto = cabinetService.findOneCabinetInfo(cabinetDetailVO);
+        CabinetFindOneInfoResponseDto cabinetFindOneInfoResponseDto = cabinetService.findOneCabinetInfo(cabinetDetailVo);
         return ResponseEntity.ok(cabinetFindOneInfoResponseDto);
     }
 
     @PostMapping("/rent")
     public ResponseEntity<?> rentCabinet(@RequestBody @Valid CabinetRentRequestDto cabinetRentRequestDto) {
-        CabinetRentVO cabinetRentVO = CabinetRentVO.builder()
+        CabinetRentVo cabinetRentVo = CabinetRentVo.builder()
                 .cabinetId(cabinetRentRequestDto.getCabinetId())
                 .build();
 
-        CabinetRentResponseDto cabinetRentResponseDto = cabinetService.rentCabinet(cabinetRentVO);
+        CabinetRentResponseDto cabinetRentResponseDto = cabinetService.rentCabinet(cabinetRentVo);
         return ResponseEntity.ok(cabinetRentResponseDto);
     }
 
     @PostMapping("/return")
     public ResponseEntity<?> returnCabinet(@RequestBody @Valid CabinetReturnRequestDto requestDto) {
-        CabinetReturnVO cabinetReturnVO = CabinetReturnVO.builder()
+        CabinetReturnVo cabinetReturnVo = CabinetReturnVo.builder()
                 .cabinetId(requestDto.getCabinetId())
                 .build();
 
-        CabinetReturnResponseDto cabinetReturnRequestDto = cabinetService.returnCabinet(cabinetReturnVO);
+        CabinetReturnResponseDto cabinetReturnRequestDto = cabinetService.returnCabinet(cabinetReturnVo);
         return ResponseEntity.ok(cabinetReturnRequestDto);
     }
 
     @GetMapping("/search")
     public ResponseEntity<?> searchCabinetByKeyword(@ModelAttribute @Valid CabinetSearchRequestDto requestDto) {
-        CabinetSearchVO cabinetSearchVO = CabinetSearchVO.builder()
+        CabinetSearchVo cabinetSearchVo = CabinetSearchVo.builder()
                 .keyword(requestDto.getKeyword())
                 .build();
 
-        CabinetSearchResponseDto cabinetSearchRequestDto = cabinetService.searchCabinetByKeyword(cabinetSearchVO);
+        CabinetSearchResponseDto cabinetSearchRequestDto = cabinetService.searchCabinetByKeyword(cabinetSearchVo);
         return ResponseEntity.ok(cabinetSearchRequestDto);
     }
 
     @GetMapping("/search/detail")
     public ResponseEntity<?> searchCabinetDetailByKeyword(@ModelAttribute @Valid CabinetSearchDetailRequestDto requestDto) {
         // 검색 세부 사항을 포함한 VO 생성
-        CabinetSearchVO cabinetSearchVO = CabinetSearchVO.builder()
+        CabinetSearchVo cabinetSearchVo = CabinetSearchVo.builder()
                 .keyword(requestDto.getKeyword())
                 .build();
 
-        CabinetSearchDetailResponseDto cabinetSearchDetailResponseDto = cabinetService.searchCabinetByKeyword(cabinetSearchVO);
+        CabinetSearchDetailResponseDto cabinetSearchDetailResponseDto = cabinetService.searchCabinetByKeyword(cabinetSearchVo);
         return ResponseEntity.ok(cabinetSearchDetailResponseDto);
     }
 
     @GetMapping("/history")
     public ResponseEntity<?> findCabinetRentHistory(@ModelAttribute @Valid CabinetRentHistoryRequestDto requestDto) {
-        CabinetRentHistoryVO cabinetRentHistoryVO = CabinetRentHistoryVO.builder()
+        CabinetRentHistoryVo cabinetRentHistoryVo = CabinetRentHistoryVo.builder()
                 .studentNumber(requestDto.getStudentNumber())
                 .build();
 
-        CabinetRentHistoryResponseDto cabinetRentHistoryRequestDto = cabinetService.findCabinetRentHistory(cabinetRentHistoryVO);
+        CabinetRentHistoryResponseDto cabinetRentHistoryRequestDto = cabinetService.findCabinetRentHistory(cabinetRentHistoryVo);
         return ResponseEntity.ok(cabinetRentHistoryRequestDto);
     }
 }

@@ -6,6 +6,6 @@ import lombok.Value;
 // 캐비닛 조회 관련 VO
 @Value
 @Builder
-public class CabinetSearchVO {
+public class CabinetSearchVo {
     String keyword;
 }

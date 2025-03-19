@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class CabinetFindAllVO {
+public class CabinetFindAllVo {
     Integer page;
     Integer size;
 }

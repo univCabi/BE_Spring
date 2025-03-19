@@ -3,10 +3,9 @@ package org.univcabi.univcabi.cabinet.vo;
 import lombok.Builder;
 import lombok.Value;
 
-import java.time.LocalDate;
-
+// 캐비닛 상세 조회 VO
 @Value
 @Builder
-public class CabinetRentHistoryVO {
-    String studentNumber;
+public class CabinetDetailVo {
+    Long cabinetId;
 }
