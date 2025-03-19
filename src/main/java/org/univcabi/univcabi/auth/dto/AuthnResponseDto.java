@@ -9,8 +9,4 @@ public class AuthnResponseDto {
     private String message; // 응답 메세지 반환
     private String studentNumber;
     private String accessToken;
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
 }

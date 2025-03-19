@@ -3,6 +3,7 @@ package org.univcabi.univcabi.auth.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,11 +53,11 @@ public class AuthnController {
 
 
         } catch (IllegalArgumentException e){
-            return ResponseEntity.status(400).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
         }catch (SecurityException e){
-            return ResponseEntity.status(400).body(AuthnResponseDto.builder().message("비밀번호가 옳바르지 않습니다.").build());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("비밀번호가 옳바르지 않습니다.").build());
         }catch (Exception e){
-            return ResponseEntity.status(500).body(AuthnResponseDto.builder().message("서버 오류").build());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(AuthnResponseDto.builder().message("서버 오류").build());
         }
     }
 
@@ -69,7 +70,7 @@ public class AuthnController {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if(!(principal instanceof UserDetails)){
-            return ResponseEntity.status(401).body("유효하지 않은 사용자입니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 사용자입니다.");
         }
 
         UserDetails userDetails = (UserDetails) principal;

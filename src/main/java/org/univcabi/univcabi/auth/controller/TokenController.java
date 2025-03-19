@@ -1,6 +1,7 @@
 package org.univcabi.univcabi.auth.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,7 @@ public class TokenController {
     @PostMapping("/authn/token/access")
     public ResponseEntity<AuthnResponseDto> refreshAccessToken(@CookieValue(value = "refreshToken", required = false)String refreshToken){
         if(refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)){
-            return  ResponseEntity.status(401).body(AuthnResponseDto.builder().message("유효하지 않은 RefreshToken").build());
+            return  ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("유효하지 않은 RefreshToken").build());
         }
 
         String studentNumber = jwtTokenProvider.getStudentNumberFromToken(refreshToken);
@@ -27,7 +28,7 @@ public class TokenController {
 
         if(storedToken == null || !storedToken.equals(refreshToken))
         {
-            return ResponseEntity.status(401).body(AuthnResponseDto.builder().message("RefreshToken 불일치").build());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("RefreshToken 불일치").build());
         }
 
         String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber,"USER");
