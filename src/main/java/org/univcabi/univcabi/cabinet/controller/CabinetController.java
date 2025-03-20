@@ -1,5 +1,7 @@
 package org.univcabi.univcabi.cabinet.controller;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +11,8 @@ import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.dto.request.*;
 import org.univcabi.univcabi.cabinet.vo.*;
 
-//TODO: jwt verify 과정 후 decode를 통해서 studentNumber 사용
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/cabinet")

@@ -1,11 +1,19 @@
 package org.univcabi.univcabi.cabinet.vo;
 
-import lombok.Builder;
-import lombok.Value;
+import org.univcabi.univcabi.cabinet.entity.BuildingName;
+import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
 
-// 캐비닛 상세 조회 VO
-@Value
-@Builder
-public class CabinetDetailVo {
-    Long cabinetId;
-}
+import java.time.LocalDateTime;
+
+public record CabinetDetailVo(
+        Integer floor,
+        String section,
+        BuildingName building,
+        String cabinetNumber,
+        CabinetStatus status,
+        Boolean isVisible,
+        String username,
+        Boolean isMine,
+        LocalDateTime expiredAt
+)
+{}

@@ -1,32 +1,47 @@
 package org.univcabi.univcabi.cabinet.repository;
 
-import org.clubs.blueheart.user.domain.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.univcabi.univcabi.cabinet.dto.request.CabinetReturnRequestDto;
+import org.univcabi.univcabi.cabinet.dto.request.CabinetSearchDetailRequestDto;
+import org.univcabi.univcabi.cabinet.dto.request.CabinetRentHistoryRequestDto;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
+import org.univcabi.univcabi.cabinet.vo.CabinetRentVo;
+import org.univcabi.univcabi.cabinet.vo.CabinetReturnVo;
 
 import java.util.List;
 import java.util.Optional;
 
-//TODO: 이거 설명 하기 queryDSL + JPA 혼용
-//TODO: https://jojoldu.tistory.com/372
-public interface CabinetRepository extends JpaRepository<Cabinet, Long> {
+public interface CabinetRepository extends JpaRepository<Cabinet, Long>, CabinetCustomRepository {
 
-    Optional<List<Cabinet>> findAllCabinetInfo(CabinetFindAllInfoRequestDto cabinetFindAllInfoRequestDto);
-    Optional<List<Cabinet>> findAllCabinetInfo(CabinetFindOneInfoRequestDto cabinetFindOneInfoRequestDto);
-    Optional<List<Cabinet>> findAllCabinetInfo(CabinetRentRequestDto cabinetRentRequestDto);
-    Optional<List<Cabinet>> findAllCabinetInfo(CabinetReturnRequestDto cabinetReturnRequestDto);
-    Optional<List<Cabinet>> findAllCabinetInfo(CabinetSearchDetailRequestDto cabinetSearchDetailRequestDto);
-    Optional<List<Cabinet>> findAllCabinetInfo(CabinetRentHistoryRequestDto cabinetRentHistoryRequestDto);
+    // 페이징된 결과
+    Page<Cabinet> findAllCabinetInfo(Pageable pageable);
+
+    // 단일 엔티티 조회
+    Optional<Cabinet> findCabinetById(Long cabinetId);
+
+    // 키워드 검색
+    @Query("SELECT c FROM Cabinet c JOIN c.buildingId b WHERE " +
+            "c.cabinetNumber LIKE %:keyword% OR " +
+            "CAST(b.name AS string) LIKE %:keyword%")
+    List<Cabinet> searchCabinetByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
 
-//    Optional<List<User>> findUsersByUsernameContainsAndDeletedAtIsNull(String userName);  // JPA Query Method
-//    Optional<List<User>> findUsersByStudentNumberStartsWithAndDeletedAtIsNull(String studentNumber); // JPA Query Method
-//    Optional<User> findUserByIdAndDeletedAtIsNull(Long id);
-//    Boolean existsByStudentNumberAndDeletedAtIsNull(String studentNumber);
-//
-//    Optional<List<User>> findAllByDeletedAtIsNull();
-//
-//    Optional<User> findOneUserByStudentNumberAndUsername(String studentNumber, String username);
+    // 상세 검색
+    Optional<List<Cabinet>> findAllCabinetInfo(CabinetSearchDetailRequestDto requestDto);
 
+    // 대여 이력 조회
+    Optional<List<Cabinet>> findAllCabinetInfo(CabinetRentHistoryRequestDto requestDto);
+
+    // 대여 이력 조회 - 학번으로
+    List<CabinetRentHistory> findRentHistoryByStudentNumber(String studentNumber);
+
+    // 대여 처리
+    Cabinet rentCabinetByCabinetId(CabinetRentVo requestVo);
+
+    // 반납 처리
+    Cabinet returnCabinet(CabinetReturnVo requestVo);
 }
-

@@ -3,7 +3,6 @@ package org.univcabi.univcabi.cabinet.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -34,6 +33,10 @@ public class Cabinet {
     @ManyToOne(optional = false)
     @JoinColumn(name="user_id", nullable = false)
     private User userId;
+
+    @NotNull
+    @Column(name="cabinet_number", nullable = false)
+    private String cabinetNumber;
 
     @Enumerated(EnumType.STRING)
     private CabinetStatus status;
