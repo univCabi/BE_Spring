@@ -10,8 +10,6 @@ import java.time.LocalDateTime;
 @Table(name="authns")
 @Getter // 자동 getter 생성
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor // 생성자 자동 생성
-@Builder
 public class Authn {
 
     @Id  // 기본키
@@ -35,7 +33,6 @@ public class Authn {
     private LocalDateTime updatedAt;
 
     @Column(nullable = true)
-    @Builder.Default
     private LocalDateTime deletedAt =null;
 
     @PrePersist // 자동 현재 시간 저장
@@ -49,4 +46,11 @@ public class Authn {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @Builder
+    public Authn(String studentNumber, String password, AuthnRole role, LocalDateTime deletedAt) {
+        this.studentNumber = studentNumber;
+        this.password = password;
+        this.role = role;
+        this.deletedAt = deletedAt;
+    }
 }
