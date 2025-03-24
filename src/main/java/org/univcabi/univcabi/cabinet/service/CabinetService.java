@@ -8,11 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
+import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
 import org.univcabi.univcabi.cabinet.vo.*;
-import org.univcabi.univcabi.cabinet.dto.request.*;
 import org.univcabi.univcabi.user.entity.User;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -27,14 +28,14 @@ public class CabinetService {
         this.cabinetRepository = cabinetRepository;
     }
 
-    public CabinetPageResponseVo convertToPageResponseVo(
-            Page<CabinetVo> cabinetPage, CabinetFindAllVo requestVo, HttpServletRequest request) {
+    public <T> CabinetPageResponseVo<T> convertToPageResponseVo(
+            Page<T> page, CabinetPageVo requestVo, HttpServletRequest request) {
 
         int currentPage = requestVo.page();
         int pageSize = requestVo.pageSize();
 
         String next = null;
-        if (currentPage < cabinetPage.getTotalPages() - 1) {
+        if (currentPage < page.getTotalPages() && !page.isEmpty()) {
             next = ServletUriComponentsBuilder.fromRequest(request)
                     .replaceQueryParam("page", currentPage + 1)
                     .replaceQueryParam("pageSize", pageSize)
@@ -43,7 +44,7 @@ public class CabinetService {
         }
 
         String previous = null;
-        if (currentPage > 0) {
+        if (currentPage > 1) {
             previous = ServletUriComponentsBuilder.fromRequest(request)
                     .replaceQueryParam("page", currentPage - 1)
                     .replaceQueryParam("pageSize", pageSize)
@@ -51,23 +52,15 @@ public class CabinetService {
                     .toUriString();
         }
 
-        return new CabinetPageResponseVo(
-                Math.toIntExact(cabinetPage.getTotalElements()),
+        return new CabinetPageResponseVo<>(
+                Math.toIntExact(page.getTotalElements()),
                 next,
                 previous,
-                cabinetPage.getContent()
+                page.getContent()
         );
     }
 
-    private CabinetVo convertToCabinetVo(Cabinet cabinet) {
-        return new CabinetVo(
-                cabinet.getBuildingId().getName().toString(), // BuildingName enum을 String으로 변환
-                Integer.parseInt(cabinet.getBuildingId().getFloor()), // floor를 Integer로 변환 (저장 형식에 따라 조정 필요)
-                cabinet.getCabinetNumber()
-        );
-    }
-
-    public Page<CabinetVo> findAllCabinetInfo(CabinetFindAllVo requestVo) {
+    public Page<CabinetVo> findAllCabinetInfo(CabinetPageVo requestVo) {
         Pageable pageable = PageRequest.of(
                 requestVo.page(),
                 requestVo.pageSize()
@@ -75,16 +68,16 @@ public class CabinetService {
 
         Page<Cabinet> cabinetPage = cabinetRepository.findAllCabinetInfo(pageable);
 
-        // 조회 결과가 없는 경우 빈 페이지 반환
-        if (cabinetPage == null) {
-            return Page.empty(pageable);
-        }
-
-        // 엔티티 페이지를 VO 페이지로 변환
-        return cabinetPage.map(this::convertToCabinetVo);
+        // Page<Cabinet>을 Page<CabinetVo>로 변환
+        return cabinetPage.map(cabinet -> new CabinetVo(
+                cabinet.getBuildingId().getName(),
+                cabinet.getBuildingId().getFloor(),
+                cabinet.getCabinetNumber()
+        ));
     }
 
     public CabinetDetailVo findOneCabinetInfo(CabinetFindOneVo requestVo) {
+        // 1. 캐비닛 조회
         Optional<Cabinet> cabinetOptional = cabinetRepository.findOneCabinetInfoByCabinetId(requestVo.cabinetId());
 
         if (cabinetOptional.isEmpty()) {
@@ -93,109 +86,159 @@ public class CabinetService {
 
         Cabinet cabinet = cabinetOptional.get();
         Building building = cabinet.getBuildingId();
-        User user = cabinet.getUserId();
+        User cabinetOwner = cabinet.getUserId();
 
-        // Record 타입으로 가정
-        CabinetDetailVo cabinetDetailVo = new CabinetDetailVo(
+        // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
+        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
+
+        // 3. Entity를 VO로 변환
+        return new CabinetDetailVo(
                 building.getFloor(),
-                cabinet.getCabinetNumber().substring(0, 1),
+                cabinet.getCabinetNumber().substring(0, 1), // section
                 building.getName(),
                 cabinet.getCabinetNumber(),
                 cabinet.getStatus(),
-                cabinet.getPayable(),
-                user.getName(),
-                user.getId().equals(requestVo.userId()),
-                cabinet.getUpdatedAt()
+                cabinet.getUserId().getIsVisible(),
+                cabinetOwner != null ? cabinetOwner.getName() : null,
+                isMine,
+                cabinet.getUpdatedAt() // 만료일
         );
-
-        return cabinetDetailVo;
     }
 
-    public CabinetVO rentCabinet(CabinetRentVo requestVo) {
-        Cabinet cabinet = cabinetRepository.rentCabinetByCabinetId(requestVo);
-        if (cabinet == null) {
-            throw new RuntimeException("캐비닛 대여에 실패했습니다.");
+    public CabinetDetailVo rentCabinet(CabinetRentVo requestVo) {
+        Optional<Cabinet> cabinetOptional = cabinetRepository.rentCabinetByCabinetId(requestVo);
+
+        if (cabinetOptional.isEmpty()) {
+            throw new RuntimeException("캐비닛을 찾을 수 없습니다.");
         }
-        return convertToCabinetVO(cabinet);
-    }
+        Cabinet cabinet = cabinetOptional.get();
+        Building building = cabinet.getBuildingId();
+        User cabinetOwner = cabinet.getUserId();
 
-    public CabinetVO returnCabinet(CabinetReturnVo requestVo) {
-        // CabinetReturnRequestDto를 직접 생성
-        CabinetReturnRequestDto requestDto = new CabinetReturnRequestDto();
-        // requestDto.setCabinetId(requestVo.cabinetId()); // setter 또는 생성자로 설정
+        // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
+        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
 
-        List<Cabinet> cabinets = cabinetRepository.findCabinetBy(requestDto)
-                .orElse(Collections.emptyList());
-
-        if (cabinets.isEmpty()) {
-            throw new RuntimeException("반납할 캐비닛을 찾을 수 없습니다.");
-        }
-
-        Cabinet cabinet = cabinetRepository.returnCabinet(requestVo);
-        if (cabinet == null) {
-            throw new RuntimeException("캐비닛 반납에 실패했습니다.");
-        }
-        return convertToCabinetVO(cabinet);
-    }
-
-    public List<CabinetVO> searchCabinetByKeyword(CabinetSearchVo requestVo) {
-        Pageable pageable = PageRequest.of(0, 5);
-        List<Cabinet> cabinets = cabinetRepository.searchCabinetByKeyword(requestVo.keyword(), pageable);
-
-        return cabinets.stream()
-                .map(this::convertToCabinetVO)
-                .collect(Collectors.toList());
-    }
-
-    public List<CabinetRentHistoryVO> findCabinetRentHistory(CabinetRentHistoryVo requestVo) {
-        // DTO 생성 및 변환
-        CabinetRentHistoryRequestDto requestDto = new CabinetRentHistoryRequestDto();
-        // requestDto.setStudentNumber(requestVo.studentNumber()); // setter 또는 생성자로 설정
-
-        List<CabinetRentHistory> histories = cabinetRepository.findRentHistoryByStudentNumber(requestVo.studentNumber());
-
-        if (histories == null) {
-            return Collections.emptyList();
-        }
-
-        return histories.stream()
-                .map(this::convertToRentHistoryVO)
-                .collect(Collectors.toList());
-    }
-
-    public List<CabinetVO> searchDetailByKeyword(CabinetSearchVo requestVo) {
-        // DTO 생성 및 변환
-        CabinetSearchDetailRequestDto requestDto = new CabinetSearchDetailRequestDto();
-        // requestDto.setKeyword(requestVo.keyword()); // setter 또는 생성자로 설정
-
-        List<Cabinet> cabinets = cabinetRepository.findAllCabinetInfo(requestDto)
-                .orElse(Collections.emptyList());
-
-        return cabinets.stream()
-                .map(this::convertToCabinetVO)
-                .collect(Collectors.toList());
-    }
-
-    // 엔티티를 VO로 변환하는 메서드들
-    private CabinetVo convertToCabinetVO(Cabinet cabinet) {
-        return new CabinetVo(
-                cabinet.getId(),
+        return new CabinetDetailVo(
+                building.getFloor(),
+                cabinet.getCabinetNumber().substring(0, 1), // section
+                building.getName(),
                 cabinet.getCabinetNumber(),
                 cabinet.getStatus(),
-                cabinet.getBuildingId().getName(),
-                cabinet.getPayable()
+                cabinet.getUserId().getIsVisible(),
+                cabinetOwner != null ? cabinetOwner.getName() : null,
+                isMine,
+                cabinet.getUpdatedAt() // 만료일
+        );
+
+    }
+
+    public CabinetDetailVo returnCabinet(CabinetReturnVo requestVo) {
+        Optional<Cabinet> cabinetOptional = cabinetRepository.returnCabinetByCabinetId(requestVo);
+
+        if (cabinetOptional.isEmpty()) {
+            throw new RuntimeException("캐비닛을 찾을 수 없습니다.");
+        }
+        Cabinet cabinet = cabinetOptional.get();
+        Building building = cabinet.getBuildingId();
+        User cabinetOwner = cabinet.getUserId();
+
+        // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
+        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
+
+        return new CabinetDetailVo(
+                building.getFloor(),
+                cabinet.getCabinetNumber().substring(0, 1), // section
+                building.getName(),
+                cabinet.getCabinetNumber(),
+                cabinet.getStatus(),
+                cabinet.getUserId().getIsVisible(),
+                cabinetOwner != null ? cabinetOwner.getName() : null,
+                isMine,
+                cabinet.getUpdatedAt() // 만료일
         );
     }
 
-
-    private CabinetRentHistoryVO convertToRentHistoryVO(CabinetRentHistory history) {
-        return new CabinetRentHistoryVO(
-                history.getId(),
-                history.getCabinet().getId(),
-                history.getCabinet().getCabinetNumber(),
-                history.getStartDate(),
-                history.getEndDate(),
-                history.getStatus()
+    public List<CabinetVo> searchCabinetByKeyword(CabinetSearchVo requestVo) {
+        // 키워드로 캐비닛 검색
+        Page<Cabinet> cabinetPage = cabinetRepository.searchCabinetsByKeyword(
+                requestVo.keyword(),
+                PageRequest.of(0, 5) // 기본 페이지네이션 설정
         );
+
+        // 조회 결과가 없는 경우 빈 리스트 반환
+        if (cabinetPage == null || cabinetPage.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // 현재 CabinetVo 구조에 맞게 변환
+        return cabinetPage.getContent().stream()
+                .map(cabinet -> new CabinetVo(
+                        cabinet.getBuildingId().getName(),  // buildingName
+                        cabinet.getBuildingId().getFloor(), // floor
+                        cabinet.getCabinetNumber()          // cabinetNumber
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public Page<CabinetVo> searchDetailByKeyword(CabinetSearchDetailVo requestVo) {
+        // 페이징 정보 생성
+        Pageable pageable = PageRequest.of(
+                requestVo.page() - 1,  // 0부터 시작하므로 1 빼기
+                requestVo.pageSize()
+        );
+
+        // 키워드 검색 쿼리 실행
+        Page<Cabinet> cabinetPage = cabinetRepository.findAllCabinetInfoByKeyword(
+                requestVo.keyword(),
+                pageable
+        );
+
+        // Page<Cabinet>을 Page<CabinetVo>로 변환
+        return cabinetPage.map(cabinet -> new CabinetVo(
+                cabinet.getBuildingId().getName(),
+                cabinet.getBuildingId().getFloor(),
+                cabinet.getCabinetNumber()
+        ));
+    }
+
+    public Page<CabinetHistoryResponseVo> findCabinetRentHistory(CabinetHistoryVo requestVo) {
+        // Create pageable with proper pagination
+        Pageable pageable = PageRequest.of(
+                requestVo.page() - 1,  // Convert to 0-based indexing
+                requestVo.pageSize()
+        );
+
+        // Fetch histories with pagination
+        Page<CabinetHistory> historyPage = cabinetRepository
+                .findCabinetHistoriesByStudentNumber(requestVo.studentNumber(), pageable);
+
+        // Map entities to response VOs
+        return historyPage.map(history -> {
+            Cabinet cabinet = history.getCabinet();
+            Building building = cabinet.getBuildingId();
+
+            return new CabinetHistoryResponseVo(
+                    building.getName(),
+                    building.getFloor(),
+                    building.getSection(),
+                    cabinet.getCabinetNumber(),
+                    history.getCreatedAt(),
+                    history.getEndedAt()
+            );
+        });
+    }
+
+
+    private boolean checkIsMine(String studentNumber, User cabinetOwner) {
+        if (studentNumber != null && cabinetOwner != null) {
+            //TODO: 추가예정
+//            // 학번으로 사용자 찾기
+//            Optional<User> requestUser = userRepository.findByStudentNumber(requestVo.studentNumber());
+//
+//            if (requestUser.isPresent()) {
+//                return requestUser.get().getId().equals(cabinetOwner.getId());
+//            }
+        }
+        return false;
     }
 }

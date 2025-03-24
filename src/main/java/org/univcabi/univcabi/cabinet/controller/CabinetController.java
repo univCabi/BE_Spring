@@ -1,6 +1,5 @@
 package org.univcabi.univcabi.cabinet.controller;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -29,7 +28,7 @@ public class CabinetController {
             HttpServletRequest request) {
 
         // 1. DTO에서 VO로 변환
-        CabinetFindAllVo requestVo = new CabinetFindAllVo(
+        CabinetPageVo requestVo = new CabinetPageVo(
                 requestDto.getPage(),
                 requestDto.getPageSize()
         );
@@ -40,7 +39,7 @@ public class CabinetController {
         );
 
         // 2-2. 조회 결과를 기반으로 응답 VO 생성
-        CabinetPageResponseVo responseVo = cabinetService.convertToPageResponseVo(
+        CabinetPageResponseVo<CabinetVo> responseVo = cabinetService.convertToPageResponseVo(
                 cabinetVoPage,
                 requestVo,
                 request
@@ -48,15 +47,11 @@ public class CabinetController {
 
         // CabinetVo 리스트를 CabinetInfoResponseDto 리스트로 변환
         List<CabinetInfoResponseDto> cabinetInfoList = responseVo.results().stream()
-                .map(cabinetVo -> {
-                    // CabinetVo를 CabinetInfoResponseDto로 명시적 타입 캐스팅 및 변환
-                    CabinetVo cabinet = (CabinetVo) cabinetVo;
-                    return CabinetInfoResponseDto.builder()
-                            .building(cabinet.buildingName())
-                            .cabinetNumber(cabinet.cabinetNumber())
-                            .floor(cabinet.floor())
-                            .build();
-                })
+                .map(cabinet -> CabinetInfoResponseDto.builder()
+                        .building(cabinet.buildingName())
+                        .cabinetNumber(cabinet.cabinetNumber())
+                        .floor(cabinet.floor())
+                        .build())
                 .collect(Collectors.toList());
 
         // 응답 DTO 생성
@@ -74,15 +69,18 @@ public class CabinetController {
 
     //TODO: JWT userID 사용 추가
     @GetMapping("/detail")
-    public ResponseEntity<CabinetFindOneInfoResponseDto> findOneCabinetInfo(@ModelAttribute @Valid CabinetFindOneInfoRequestDto requestDto) {
+    public ResponseEntity<CabinetDetailResponseDto> findOneCabinetInfo(@ModelAttribute @Valid CabinetFindOneInfoRequestDto requestDto) {
         // Builder 대신 정적 팩토리 메서드 사용
-        CabinetFindOneVo requestVo = new CabinetFindOneVo(requestDto.getCabinetId());
+
+        //TODO: 변경필요
+        String studentNumber = "test1234";
+
+        CabinetFindOneVo requestVo = new CabinetFindOneVo(requestDto.getCabinetId(), studentNumber);
 
         // Optional 처리
-        CabinetDetailVo cabinetDetailVo = cabinetService.findOneCabinetInfo(requestVo)
-                .orElseThrow(() -> new EntityNotFoundException("해당 캐비닛을 찾을 수 없습니다. ID: " + requestDto.getCabinetId()));
+        CabinetDetailVo cabinetDetailVo = cabinetService.findOneCabinetInfo(requestVo);
 
-        CabinetFindOneInfoResponseDto responseDto = CabinetFindOneInfoResponseDto.builder()
+        CabinetDetailResponseDto responseDto = CabinetDetailResponseDto.builder()
                 .floor(cabinetDetailVo.floor())
                 .section(cabinetDetailVo.section())
                 .building(cabinetDetailVo.building())
@@ -98,58 +96,65 @@ public class CabinetController {
     }
 
     @PostMapping("/rent")
-    public ResponseEntity<?> rentCabinet(@RequestBody @Valid CabinetRentRequestDto requestDto) {
-        CabinetRentVo requestVo = CabinetRentVo.builder()
-                .cabinetId(requestDto.getCabinetId())
-                .build();
+    public ResponseEntity<CabinetDetailResponseDto> rentCabinet(@RequestBody @Valid CabinetRentRequestDto requestDto) {
 
-        CabinetVO cabinetVO = cabinetService.rentCabinet(requestVo);
+        //TODO: 변경필요
+        String studentNumber = "test1234";
+        CabinetRentVo requestVo = new CabinetRentVo(requestDto.getCabinetId(), studentNumber);
+
+        CabinetDetailVo cabinetDetailVo = cabinetService.rentCabinet(requestVo);
 
         // VO를 DTO로 변환
-        CabinetRentResponseDto responseDto = new CabinetRentResponseDto(
-                cabinetVO.getId(),
-                cabinetVO.getCabinetNumber(),
-                cabinetVO.getStatus(),
-                "대여가 완료되었습니다."
-        );
+        CabinetDetailResponseDto responseDto = CabinetDetailResponseDto.builder()
+                .floor(cabinetDetailVo.floor())
+                .section(cabinetDetailVo.section())
+                .building(cabinetDetailVo.building())
+                .cabinetNumber(cabinetDetailVo.cabinetNumber())
+                .status(cabinetDetailVo.status())
+                .isVisible(cabinetDetailVo.isVisible())
+                .username(cabinetDetailVo.username())
+                .isMine(cabinetDetailVo.isMine())
+                .expiredAt(cabinetDetailVo.expiredAt())
+                .build();
 
         return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping("/return")
-    public ResponseEntity<?> returnCabinet(@RequestBody @Valid CabinetReturnRequestDto requestDto) {
-        CabinetReturnVo requestVo = CabinetReturnVo.builder()
-                .cabinetId(requestDto.getCabinetId())
+    public ResponseEntity<CabinetDetailResponseDto> returnCabinet(@RequestBody @Valid CabinetReturnRequestDto requestDto) {
+        //TODO: 변경필요
+        String studentNumber = "test1234";
+
+        CabinetReturnVo requestVo = new CabinetReturnVo(requestDto.getCabinetId(), studentNumber);
+
+        CabinetDetailVo cabinetDetailVo = cabinetService.returnCabinet(requestVo);
+
+        CabinetDetailResponseDto responseDto = CabinetDetailResponseDto.builder()
+                .floor(cabinetDetailVo.floor())
+                .section(cabinetDetailVo.section())
+                .building(cabinetDetailVo.building())
+                .cabinetNumber(cabinetDetailVo.cabinetNumber())
+                .status(cabinetDetailVo.status())
+                .isVisible(cabinetDetailVo.isVisible())
+                .username(cabinetDetailVo.username())
+                .isMine(cabinetDetailVo.isMine())
+                .expiredAt(cabinetDetailVo.expiredAt())
                 .build();
-
-        CabinetVO cabinetVO = cabinetService.returnCabinet(requestVo);
-
-        // VO를 DTO로 변환
-        CabinetReturnResponseDto responseDto = new CabinetReturnResponseDto(
-                cabinetVO.getId(),
-                cabinetVO.getCabinetNumber(),
-                cabinetVO.getStatus(),
-                "반납이 완료되었습니다."
-        );
-
         return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchCabinetByKeyword(@ModelAttribute @Valid CabinetSearchRequestDto requestDto) {
-        CabinetSearchVo requestVo = CabinetSearchVo.builder()
-                .keyword(requestDto.getKeyword())
-                .build();
+    public ResponseEntity<List<CabinetSearchResponseDto>> searchCabinetByKeyword(@ModelAttribute @Valid CabinetSearchRequestDto requestDto) {
+        CabinetSearchVo requestVo = new CabinetSearchVo(requestDto.getKeyword());
 
-        List<CabinetVO> cabinetVOs = cabinetService.searchCabinetByKeyword(requestVo);
+        List<CabinetVo> cabinetVos = cabinetService.searchCabinetByKeyword(requestVo);
 
         // VO 목록을 DTO 목록으로 변환
-        List<CabinetSearchResponseDto> responseList = cabinetVOs.stream()
+        List<CabinetSearchResponseDto> responseList = cabinetVos.stream()
                 .map(vo -> new CabinetSearchResponseDto(
-                        vo.getId(),
-                        vo.getCabinetNumber(),
-                        vo.getStatus(),
-                        vo.getBuildingName()
+                        vo.buildingName(),
+                        vo.floor(),
+                        vo.cabinetNumber()
                 ))
                 .collect(Collectors.toList());
 
@@ -157,57 +162,84 @@ public class CabinetController {
     }
 
     @GetMapping("/search/detail")
-    public ResponseEntity<?> searchCabinetDetailByKeyword(@ModelAttribute @Valid CabinetSearchDetailRequestDto requestDto) {
-        CabinetSearchVo requestVo = CabinetSearchVo.builder()
-                .keyword(requestDto.getKeyword())
-                .build();
+    public ResponseEntity<CabinetFindAllInfoResponseDto> searchCabinetDetailByKeyword(@ModelAttribute @Valid CabinetSearchDetailRequestDto requestDto,
+                                                          HttpServletRequest request) {
+        // DTO를 VO로 변환 (빌더 패턴 사용 가능하면 좋을 것)
+        CabinetSearchDetailVo requestVo = new CabinetSearchDetailVo(
+                requestDto.getKeyword(),
+                requestDto.getPage(),
+                requestDto.getPageSize()
+        );
 
-        List<CabinetVO> cabinetVOs = cabinetService.searchCabinetByKeyword(requestVo);
+        // 서비스 호출해서 페이징된 결과 가져오기
+        Page<CabinetVo> cabinetVoPage = cabinetService.searchDetailByKeyword(requestVo);
 
-        // VO 목록을 상세 DTO로 변환
-        List<CabinetDetailDto> cabinetDetails = cabinetVOs.stream()
-                .map(vo -> new CabinetDetailDto(
-                        vo.getId(),
-                        vo.getCabinetNumber(),
-                        vo.getStatus(),
-                        vo.getBuildingName(),
-                        vo.getPayable()
-                        // 필요한 추가 정보
-                ))
+        CabinetPageVo pageVo = new CabinetPageVo(
+                requestDto.getPage(),
+                requestDto.getPageSize()
+        );
+
+        // 페이지 응답 VO로 변환 (제네릭 타입 명시)
+        CabinetPageResponseVo<CabinetVo> responseVo = cabinetService.convertToPageResponseVo(
+                cabinetVoPage,
+                pageVo,
+                request
+        );
+
+        // CabinetVo 리스트를 CabinetInfoResponseDto 리스트로 변환 (캐스팅 불필요)
+        List<CabinetInfoResponseDto> cabinetInfoList = responseVo.results().stream()
+                .map(cabinet -> CabinetInfoResponseDto.builder()
+                        .building(cabinet.buildingName())
+                        .cabinetNumber(cabinet.cabinetNumber())
+                        .floor(cabinet.floor())
+                        .build())
                 .collect(Collectors.toList());
 
-        CabinetSearchDetailResponseDto responseDto = new CabinetSearchDetailResponseDto(
-                cabinetDetails,
-                cabinetVOs.size()
-        );
+        // 응답 DTO 생성 (빌더 패턴 사용)
+        CabinetFindAllInfoResponseDto responseDto = CabinetFindAllInfoResponseDto.builder()
+                .count(responseVo.count())
+                .next(responseVo.next())
+                .previous(responseVo.previous())
+                .results(cabinetInfoList)
+                .build();
 
         return ResponseEntity.ok(responseDto);
     }
 
     @GetMapping("/history")
-    public ResponseEntity<?> findCabinetRentHistory(@ModelAttribute @Valid CabinetRentHistoryRequestDto requestDto) {
-        CabinetRentHistoryVo requestVo = CabinetRentHistoryVo.builder()
-                .studentNumber(requestDto.getStudentNumber())
-                .build();
-
-        List<CabinetRentHistoryVO> historyVOs = cabinetService.findCabinetRentHistory(requestVo);
-
-        // VO 목록을 DTO로 변환
-        List<CabinetHistoryDto> historyItems = historyVOs.stream()
-                .map(vo -> new CabinetHistoryDto(
-                        vo.getId(),
-                        vo.getCabinetId(),
-                        vo.getCabinetNumber(),
-                        vo.getStartDate(),
-                        vo.getEndDate(),
-                        vo.getStatus()
-                ))
-                .collect(Collectors.toList());
-
-        CabinetRentHistoryResponseDto responseDto = new CabinetRentHistoryResponseDto(
-                historyItems,
-                historyVOs.size()
+    public ResponseEntity<List<CabinetHistoryResponseDto>> findCabinetHistory(@ModelAttribute @Valid CabinetHistoryRequestDto requestDto,
+                                                HttpServletRequest request) {
+        CabinetHistoryVo requestVo = new CabinetHistoryVo(
+                requestDto.getStudentNumber(),
+                requestDto.getPage(),
+                requestDto.getPageSize()
         );
+
+        Page<CabinetHistoryResponseVo> historyVOsPage = cabinetService.findCabinetRentHistory(requestVo);
+
+        // 페이지 응답 VO로 변환 (제네릭 타입 명시)
+        CabinetPageVo pageVo = new CabinetPageVo(
+                requestDto.getPage(),
+                requestDto.getPageSize()
+        );
+
+        CabinetPageResponseVo<CabinetHistoryResponseVo> responseVo = cabinetService.convertToPageResponseVo(
+                historyVOsPage,
+                pageVo,
+                request
+        );
+
+        // VO 목록을 DTO로 변환 (캐스팅 불필요)
+        List<CabinetHistoryResponseDto> responseDto = responseVo.results().stream()
+                .map(vo -> CabinetHistoryResponseDto.builder()
+                        .building(vo.building())
+                        .floor(vo.floor())
+                        .section(vo.section())
+                        .cabinetNumber(vo.cabinetNumber())
+                        .startDate(vo.startDate())
+                        .endDate(vo.endDate())
+                        .build())
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(responseDto);
     }
