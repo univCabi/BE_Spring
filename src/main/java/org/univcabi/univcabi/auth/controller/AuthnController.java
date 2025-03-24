@@ -27,7 +27,7 @@ public class AuthnController {
 
     @PostMapping("/create")
     public ResponseEntity<String> createUser(){
-        authnService.createUser(null); // Test 를 위해 null 사용
+        authnService.createUser(); // Test 를 위해 null 사용
         return ResponseEntity.ok("회원 생성 성공");
     }
 

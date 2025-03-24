@@ -1,0 +1,5 @@
+[
+  { "studentNumber" : "202213185" , "password":"202213185","role":"ADMIN"},
+  { "studentNumber" : "202111741" , "password":"202111741","role":"ADMIN"},
+  { "studentNumber" : "202112798" , "password":"202112798","role":"ADMIN"}
+]
