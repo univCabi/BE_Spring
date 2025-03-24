@@ -23,7 +23,9 @@ public class Building {
     @Enumerated(EnumType.STRING)
     private BuildingName name;
 
-    private String floor;
+    private Integer floor;
+
+    private String section;
 
     private Integer width;
 
