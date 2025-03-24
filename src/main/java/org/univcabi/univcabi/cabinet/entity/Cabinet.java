@@ -29,9 +29,8 @@ public class Cabinet {
     @JoinColumn(name="building_id", nullable = false)
     private Building buildingId;
 
-    @NotNull
-    @ManyToOne(optional = false)
-    @JoinColumn(name="user_id", nullable = false)
+    @ManyToOne(optional = true)
+    @JoinColumn(name="user_id")
     private User userId;
 
     @NotNull
@@ -41,8 +40,8 @@ public class Cabinet {
     @Enumerated(EnumType.STRING)
     private CabinetStatus status;
 
-    @NotNull
-    private Boolean payable;
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
