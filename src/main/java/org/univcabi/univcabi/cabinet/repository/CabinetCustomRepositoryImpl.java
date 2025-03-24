@@ -218,12 +218,14 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
         QAuthn authn = QAuthn.authn;
 
         // First execute query to get total count
-        long total = queryFactory
-                .select(cabinetHistory.count())
-                .from(cabinetHistory)
-                .join(cabinetHistory.user, user)
-                .where(authn.studentNumber.eq(studentNumber))
-                .fetchOne();
+        long total = Optional.ofNullable(
+                queryFactory
+                        .select(cabinetHistory.count())
+                        .from(cabinetHistory)
+                        .join(cabinetHistory.user, user)
+                        .where(authn.studentNumber.eq(studentNumber))
+                        .fetchOne()
+        ).orElse(0L);
 
         // Then get the paginated results
         List<CabinetHistory> content = queryFactory
