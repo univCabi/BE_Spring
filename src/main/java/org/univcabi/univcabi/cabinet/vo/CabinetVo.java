@@ -1,8 +1,10 @@
 package org.univcabi.univcabi.cabinet.vo;
 
+import org.univcabi.univcabi.cabinet.entity.BuildingName;
+
 public record CabinetVo(
         // 단일 캐비닛 정보용 필드
-        String buildingName,
+        BuildingName buildingName,
         int floor,
         String cabinetNumber
 ) {

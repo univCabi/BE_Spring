@@ -1,17 +1,23 @@
 package org.univcabi.univcabi.cabinet.dto.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.univcabi.univcabi.cabinet.entity.BuildingName;
 
+import java.time.LocalDateTime;
+
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CabinetInfoResponseDto {
+public class CabinetHistoryResponseDto {
     private BuildingName building;
-    private String cabinetNumber;
     private Integer floor;
+    private String section;
+    private String cabinetNumber;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+
 }

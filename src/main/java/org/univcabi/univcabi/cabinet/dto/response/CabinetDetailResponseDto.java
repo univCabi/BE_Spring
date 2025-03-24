@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CabinetFindOneInfoResponseDto {
+public class CabinetDetailResponseDto {
         private Integer floor;
         private String section;
         private BuildingName building;

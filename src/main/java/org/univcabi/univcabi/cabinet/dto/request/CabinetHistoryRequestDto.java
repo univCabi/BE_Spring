@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class CabinetRentHistoryRequestDto {
+public class CabinetHistoryRequestDto {
     String studentNumber;
+    Integer page;
+    Integer pageSize;
 }

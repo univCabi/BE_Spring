@@ -11,18 +11,19 @@ import java.util.List;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CabinetFindAllInfoResponseDto extends CabinetPageResponseDto {
-    // 원하는 타입의 result 필드 정의
-    private List<CabinetInfoResponseDto> result;
+public class CabinetFindAllInfoResponseDto {
+    private long count;
+    private String next;
+    private String previous;
+    private List<CabinetInfoResponseDto> results;
 
-    // 정적 팩토리 메서드 추가
-    public static CabinetFindAllInfoResponseDto of(Integer count, String next, String previous,
-                                                   List<CabinetInfoResponseDto> result) {
-        CabinetFindAllInfoResponseDto dto = new CabinetFindAllInfoResponseDto();
-        dto.setCount(count);
-        dto.setNext(next);
-        dto.setPrevious(previous);
-        dto.setResult(result);
-        return dto;
+    // Static factory method if you still want to keep the 'of' method
+    public static CabinetFindAllInfoResponseDto of(long count, String next, String previous, List<CabinetInfoResponseDto> results) {
+        return CabinetFindAllInfoResponseDto.builder()
+                .count(count)
+                .next(next)
+                .previous(previous)
+                .results(results)
+                .build();
     }
 }

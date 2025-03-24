@@ -1,6 +1,6 @@
 package org.univcabi.univcabi.cabinet.vo;
 
-public record CabinetFindAllVo(
+public record CabinetPageVo(
         Integer page,
-        Integer pageSize
-) {}
+        Integer pageSize) {
+}
