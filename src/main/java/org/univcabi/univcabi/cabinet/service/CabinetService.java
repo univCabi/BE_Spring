@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
@@ -108,6 +109,7 @@ public class CabinetService {
         );
     }
 
+    @Transactional
     public CabinetDetailVo rentCabinet(CabinetRentVo requestVo) {
         Optional<Cabinet> cabinetOptional = cabinetRepository.rentCabinetByCabinetId(requestVo);
 
@@ -117,9 +119,6 @@ public class CabinetService {
         Cabinet cabinet = cabinetOptional.get();
         Building building = cabinet.getBuildingId();
         User cabinetOwner = cabinet.getUserId();
-
-        // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
-        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
 
         Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : false;
 
@@ -131,12 +130,12 @@ public class CabinetService {
                 cabinet.getStatus(),
                 isVisible,
                 cabinetOwner != null ? cabinetOwner.getName() : null,
-                isMine,
+                true,
                 cabinet.getUpdatedAt() // 만료일
         );
-
     }
 
+    @Transactional
     public CabinetDetailVo returnCabinet(CabinetReturnVo requestVo) {
         Optional<Cabinet> cabinetOptional = cabinetRepository.returnCabinetByCabinetId(requestVo);
 
@@ -148,7 +147,9 @@ public class CabinetService {
         User cabinetOwner = cabinet.getUserId();
 
         // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
-        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
+//        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
+
+        Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : true;
 
         return new CabinetDetailVo(
                 building.getFloor(),
@@ -156,9 +157,9 @@ public class CabinetService {
                 building.getName(),
                 cabinet.getCabinetNumber(),
                 cabinet.getStatus(),
-                cabinet.getUserId().getIsVisible(),
+                isVisible,
                 cabinetOwner != null ? cabinetOwner.getName() : null,
-                isMine,
+                false,
                 cabinet.getUpdatedAt() // 만료일
         );
     }
@@ -236,7 +237,7 @@ public class CabinetService {
 
     private boolean checkIsMine(String studentNumber, User cabinetOwner) {
         if (studentNumber != null && cabinetOwner != null) {
-            //TODO: 추가예정
+//            //TODO: 추가예정
 //            // 학번으로 사용자 찾기
 //            Optional<User> requestUser = userRepository.findByStudentNumber(requestVo.studentNumber());
 //

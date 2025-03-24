@@ -73,7 +73,7 @@ public class CabinetController {
         // Builder 대신 정적 팩토리 메서드 사용
 
         //TODO: 변경필요
-        String studentNumber = "test1234";
+        String studentNumber = "202111741";
 
         CabinetFindOneVo requestVo = new CabinetFindOneVo(requestDto.getCabinetId(), studentNumber);
 
@@ -99,7 +99,7 @@ public class CabinetController {
     public ResponseEntity<CabinetDetailResponseDto> rentCabinet(@RequestBody @Valid CabinetRentRequestDto requestDto) {
 
         //TODO: 변경필요
-        String studentNumber = "test1234";
+        String studentNumber = "202111741";
         CabinetRentVo requestVo = new CabinetRentVo(requestDto.getCabinetId(), studentNumber);
 
         CabinetDetailVo cabinetDetailVo = cabinetService.rentCabinet(requestVo);
@@ -123,7 +123,7 @@ public class CabinetController {
     @PostMapping("/return")
     public ResponseEntity<CabinetDetailResponseDto> returnCabinet(@RequestBody @Valid CabinetReturnRequestDto requestDto) {
         //TODO: 변경필요
-        String studentNumber = "test1234";
+        String studentNumber = "202111741";
 
         CabinetReturnVo requestVo = new CabinetReturnVo(requestDto.getCabinetId(), studentNumber);
 
