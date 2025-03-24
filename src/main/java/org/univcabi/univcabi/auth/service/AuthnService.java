@@ -16,7 +16,6 @@ public class AuthnService {
 
     private final AuthnRepository authnRepository;
 
-
     public AuthnResponseDto login(AuthnRequestDto requestDto){
         Authn authn = authnRepository.findByStudentNumber(requestDto.getStudentNumber())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 유저입니다."));

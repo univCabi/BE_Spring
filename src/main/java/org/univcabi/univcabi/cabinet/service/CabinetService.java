@@ -91,6 +91,9 @@ public class CabinetService {
         // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
         boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
 
+        //TODO: 왜 Boolean 이거여야 하는지 알아보기
+        Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : false;
+
         // 3. Entity를 VO로 변환
         return new CabinetDetailVo(
                 building.getFloor(),
@@ -98,7 +101,7 @@ public class CabinetService {
                 building.getName(),
                 cabinet.getCabinetNumber(),
                 cabinet.getStatus(),
-                cabinet.getUserId().getIsVisible(),
+                isVisible,
                 cabinetOwner != null ? cabinetOwner.getName() : null,
                 isMine,
                 cabinet.getUpdatedAt() // 만료일
@@ -118,13 +121,15 @@ public class CabinetService {
         // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
         boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
 
+        Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : false;
+
         return new CabinetDetailVo(
                 building.getFloor(),
                 cabinet.getCabinetNumber().substring(0, 1), // section
                 building.getName(),
                 cabinet.getCabinetNumber(),
                 cabinet.getStatus(),
-                cabinet.getUserId().getIsVisible(),
+                isVisible,
                 cabinetOwner != null ? cabinetOwner.getName() : null,
                 isMine,
                 cabinet.getUpdatedAt() // 만료일

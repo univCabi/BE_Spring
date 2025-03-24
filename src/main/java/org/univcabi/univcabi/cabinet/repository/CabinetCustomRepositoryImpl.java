@@ -1,6 +1,7 @@
 package org.univcabi.univcabi.cabinet.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,11 @@ import java.util.Optional;
 public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
 
     private JPAQueryFactory queryFactory;
+
+    // 명시적 생성자 주입
+    public CabinetCustomRepositoryImpl(EntityManager entityManager) {
+        this.queryFactory = new JPAQueryFactory(entityManager);
+    }
 
     @Override
     public Optional<Cabinet> findOneCabinetInfoByCabinetId(Long cabinetId) {
