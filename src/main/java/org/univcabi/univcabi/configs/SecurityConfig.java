@@ -22,7 +22,7 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
-@ComponentScan(basePackages = {"org.univcabi.auth"})
+@ComponentScan(basePackages = {"org.univcabi.univcabi.auth"})
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;

@@ -6,11 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
-import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
-import org.univcabi.univcabi.cabinet.vo.CabinetReturnVo;
-
-import java.util.List;
-import java.util.Optional;
 
 public interface CabinetRepository extends JpaRepository<Cabinet, Long>, CabinetCustomRepository {
 
