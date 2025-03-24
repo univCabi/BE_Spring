@@ -32,8 +32,8 @@ public class CabinetService {
     public <T> CabinetPageResponseVo<T> convertToPageResponseVo(
             Page<T> page, CabinetPageVo requestVo, HttpServletRequest request) {
 
-        int currentPage = requestVo.page();
-        int pageSize = requestVo.pageSize();
+        int currentPage = requestVo.page() != null ? requestVo.page() : 0;
+        int pageSize = requestVo.pageSize() != null ? requestVo.pageSize() : 12;
 
         String next = null;
         if (currentPage < page.getTotalPages() && !page.isEmpty()) {
@@ -189,7 +189,7 @@ public class CabinetService {
     public Page<CabinetVo> searchDetailByKeyword(CabinetSearchDetailVo requestVo) {
         // 페이징 정보 생성
         Pageable pageable = PageRequest.of(
-                requestVo.page() - 1,  // 0부터 시작하므로 1 빼기
+                requestVo.page(),
                 requestVo.pageSize()
         );
 
@@ -210,7 +210,7 @@ public class CabinetService {
     public Page<CabinetHistoryResponseVo> findCabinetRentHistory(CabinetHistoryVo requestVo) {
         // Create pageable with proper pagination
         Pageable pageable = PageRequest.of(
-                requestVo.page() - 1,  // Convert to 0-based indexing
+                requestVo.page(),  // Convert to 0-based indexing
                 requestVo.pageSize()
         );
 

@@ -26,9 +26,8 @@ public interface CabinetRepository extends JpaRepository<Cabinet, Long>, Cabinet
 
     @Query("SELECT c FROM Cabinet c JOIN c.buildingId b WHERE " +
             "(:keyword IS NULL OR :keyword = '' OR " +
-            "c.cabinetNumber LIKE %:keyword% OR " +
-            "CAST(b.name AS string) LIKE %:keyword% OR " +
-            "CAST(b.floor AS string) LIKE %:keyword%)")
+            "c.cabinetNumber LIKE CONCAT('%', :keyword, '%') OR " +
+            "CAST(b.name AS string) LIKE CONCAT('%', :keyword, '%') OR " +
+            "CAST(b.floor AS string) LIKE CONCAT('%', :keyword, '%'))")
     Page<Cabinet> findAllCabinetInfoByKeyword(@Param("keyword") String keyword, Pageable pageable);
-
 }

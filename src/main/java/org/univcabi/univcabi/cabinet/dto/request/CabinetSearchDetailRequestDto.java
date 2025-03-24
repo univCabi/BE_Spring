@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class CabinetSearchDetailRequestDto {
     private String keyword;
-    private Integer page;
-    private Integer pageSize;
+    private Integer page = 0;
+    private Integer pageSize = 12;
 }
