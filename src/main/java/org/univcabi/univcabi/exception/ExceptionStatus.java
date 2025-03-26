@@ -16,6 +16,26 @@ public enum ExceptionStatus {
     AUTH_COOKIE_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "잘못된 쿠키로 접근했습니다"),
     AUTH_SESSION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "잘못된 세션으로 접근했습니다"),
 
+    // CABINET ERROR CODE
+    CABINET_INVALID_ID(HttpStatus.BAD_REQUEST, "잘못된 사물함 ID입니다"),
+    CABINET_INVALID_STUDENT_NUMBER(HttpStatus.BAD_REQUEST, "잘못된 학번입니다"),
+    CABINET_HISTORY_CREATION_FAILED(HttpStatus.BAD_REQUEST, "사물함 대여 기록 생성에 실패했습니다"),
+    CABINET_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "사물함 대여 기록을 찾을 수 없습니다"),
+    CABINET_HISTORY_SEARCH_FAILED(HttpStatus.BAD_REQUEST, "사물함 대여 기록 조회에 실패했습니다"),
+
+    CABINET_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사물함의 정보를 찾을 수 없습니다"),
+
+    CABINET_NOT_USING(HttpStatus.CONFLICT, "사용중이지 않은 사물함입니다"),
+    CABINET_ALREADY_USING(HttpStatus.CONFLICT, "이미 대여중인 사물함입니다"),
+
+    CABINET_RENT_FAILED(HttpStatus.CONFLICT, "사물함 대여에 실패했습니다"),
+    CABINET_RETURN_FAILED(HttpStatus.CONFLICT, "사물함 반납에 실패했습니다"),
+    CABINET_HISTORY_UPDATE_FAILED(HttpStatus.CONFLICT, "사물함 대여 기록 업데이트에 실패했습니다"),
+
+
+    //USER
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다"),
+
     // GENERAL ERROR CODE
     GENERAL_BAD_REQUEST(HttpStatus.BAD_REQUEST, "서버에 잘못된 요청입니다."),
     GENERAL_REQUEST_INVALID_PARAMS(HttpStatus.BAD_REQUEST, "서버에 잘못된 요청입니다."),
