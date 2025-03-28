@@ -2,6 +2,7 @@ package org.univcabi.univcabi.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.univcabi.univcabi.user.entity.User;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +19,7 @@ public class Authn {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // DB에서 직접 ID 생성
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(name="student_number",nullable = false, unique = true, length = 50)
     private String studentNumber;
 
     @Column(nullable = false, length = 255)
@@ -28,13 +29,18 @@ public class Authn {
     @Column(nullable = false, length = 50)
     private AuthnRole role;
 
-    @Column(nullable = false, updatable = false)
+    // Authn 엔티티가 관계의 주인이 됨 (외래 키를 가짐)
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true)  // user_id를 외래 키로 설정
+    private User user;
+
+    @Column(name="created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column(name="updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(nullable = true)
+    @Column(name="deleted_at")
     @Builder.Default
     private LocalDateTime deletedAt =null;
 

@@ -22,7 +22,7 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
-@ComponentScan(basePackages = {"org.univcabi.auth"})
+@ComponentScan(basePackages = {"org.univcabi.univcabi.auth"})
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -46,7 +46,9 @@ public class SecurityConfig {
                         .requestMatchers("/authn/login",
                                 "/authn/create",
                                 "/authn/delete",
-                                "/authn/token/access").permitAll() //로그인 api는 인증 없이 가능
+                                "/authn/token/access",
+                                "/api/v1/cabinet/**")
+                        .permitAll() //로그인 api는 인증 없이 가능
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,customUserDetailsService,tokenService),
                         UsernamePasswordAuthenticationFilter.class); // JWT 인증 필터 추가
