@@ -110,7 +110,7 @@ public class CabinetService {
 
     @Transactional
     public CabinetDetailVo rentCabinet(CabinetRentVo requestVo) {
-        Optional<Cabinet> cabinetOptional = cabinetRepository.rentCabinetByCabinetId(requestVo);
+        Optional<Cabinet> cabinetOptional = cabinetRepository.rentCabinetByCabinetId(requestVo.cabinetId(), requestVo.studentNumber());
 
         if (cabinetOptional.isEmpty()) {
             throw new RuntimeException("캐비닛을 찾을 수 없습니다.");
@@ -136,7 +136,7 @@ public class CabinetService {
 
     @Transactional
     public CabinetDetailVo returnCabinet(CabinetReturnVo requestVo) {
-        Optional<Cabinet> cabinetOptional = cabinetRepository.returnCabinetByCabinetId(requestVo);
+        Optional<Cabinet> cabinetOptional = cabinetRepository.returnCabinetByCabinetId(requestVo.cabinetId(), requestVo.studentNumber());
 
         if (cabinetOptional.isEmpty()) {
             throw new RuntimeException("캐비닛을 찾을 수 없습니다.");

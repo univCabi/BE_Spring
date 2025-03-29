@@ -4,9 +4,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
-import org.univcabi.univcabi.cabinet.vo.CabinetHistoryVo;
-import org.univcabi.univcabi.cabinet.vo.CabinetRentVo;
-import org.univcabi.univcabi.cabinet.vo.CabinetReturnVo;
 
 import java.util.Optional;
 
@@ -15,10 +12,10 @@ public interface CabinetCustomRepository {
     Optional<Cabinet> findOneCabinetInfoByCabinetId(Long cabinetId);
 
     // 대여 처리
-    Optional<Cabinet> rentCabinetByCabinetId(CabinetRentVo requestVo);
+    Optional<Cabinet> rentCabinetByCabinetId(Long cabinetId, String studentNumber);
 
     // 반납 처리
-    Optional<Cabinet> returnCabinetByCabinetId(CabinetReturnVo requestVo);
+    Optional<Cabinet> returnCabinetByCabinetId(Long cabinetId, String studentNumber);
 
     //대여 기록 조회
     Page<CabinetHistory> findCabinetHistoriesByStudentNumber(String studentNumber, Pageable pageable);
