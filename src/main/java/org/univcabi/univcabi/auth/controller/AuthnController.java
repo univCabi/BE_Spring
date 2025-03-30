@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.auth.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -9,11 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
-import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
+import org.univcabi.univcabi.auth.dto.request.AuthnCreateRequestDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnResponseDto;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
+import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
 
 @Slf4j
 @RestController
@@ -26,13 +30,21 @@ public class AuthnController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createUser(){
-        authnService.createUser(); // Test 를 위해 null 사용
-        return ResponseEntity.ok("회원 생성 성공");
+    public ResponseEntity<AuthnCreateResponseDto> createUser(@RequestBody @Valid AuthnCreateRequestDto requestDto){
+
+        AuthnCreateVo requestVo = new AuthnCreateVo(
+                requestDto.getStudentNumber(),
+                requestDto.getPassword(),
+                AuthnRole.NORMAL
+        );
+
+        AuthnCreateResponseDto responseDto = authnService.createUser(requestVo);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnRequestDto requestDto){
+    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnCreateRequestDto requestDto){
         try{
             AuthnResponseDto responseDto = authnService.login(requestDto);
 

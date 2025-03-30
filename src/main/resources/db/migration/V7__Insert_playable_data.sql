@@ -2,10 +2,15 @@ insert into users (id, name, affiliation, phone_number, building_id, is_visible,
 insert into users (id, name, affiliation, phone_number, building_id, is_visible, created_at, updated_at, deleted_at) values (2502, '김주희', '기술데이터공학전공', '010-2222-2222', 31, true, '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
 insert into users (id, name, affiliation, phone_number, building_id, is_visible, created_at, updated_at, deleted_at) values (2503, '민웅기', '컴퓨터공학전공', '010-3333-3333', 31, true, '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
 
+-- 임시 평문 암호
+insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2501, 202111741, '202111741', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
+insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2502, 202112798, '202112798', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
+insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2503, 202213185, '202213185', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
 
-insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2501, 202111741, 'pbkdf2_sha256$870000$pNPyeyumaZ76Kl2W3xIC9S$NsPQhrBJH6DPUiYT4lNgYrlf/jwBm1breQgVSL3JxRo=', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
-insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2502, 202112798, 'pbkdf2_sha256$870000$w5gwUowB0V6R7laJAjNwiG$5olyFsCMaqBMShFX46yfNMCH9YMXl29mOQfdla2AM94=', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
-insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2503, 202213185, 'pbkdf2_sha256$870000$bNaUYDu0Ve1Qg96phcGIJx$rUPcQ6dkmfYM470FwpnFEvnz2QM8f4l9fYpx+xzurdk=', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
+
+--insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2502, 202112798, 'pbkdf2_sha256$870000$w5gwUowB0V6R7laJAjNwiG$5olyFsCMaqBMShFX46yfNMCH9YMXl29mOQfdla2AM94=', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
+--insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2503, 202213185, 'pbkdf2_sha256$870000$bNaUYDu0Ve1Qg96phcGIJx$rUPcQ6dkmfYM470FwpnFEvnz2QM8f4l9fYpx+xzurdk=', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
+--insert into authns (user_id, student_number, password, role, created_at, updated_at, deleted_at) values (2501, 202111741, 'pbkdf2_sha256$870000$pNPyeyumaZ76Kl2W3xIC9S$NsPQhrBJH6DPUiYT4lNgYrlf/jwBm1breQgVSL3JxRo=', 'ADMIN', '2025-06-15 00:00:00', '2025-06-15 00:00:00', null);
 
 
 insert into cabinet_histories (id, user_id, cabinet_id, created_at, expired_at, updated_at, ended_at) values (1, 2503, 32, '2024-06-15 00:00:00', '2025-06-15 00:00:00', '2024-06-15 00:00:00', '2025-06-15 00:00:00');

@@ -1,4 +1,4 @@
-package org.univcabi.univcabi.auth.dto;
+package org.univcabi.univcabi.auth.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

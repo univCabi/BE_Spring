@@ -6,11 +6,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
-import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
+import org.univcabi.univcabi.auth.dto.request.AuthnCreateRequestDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnResponseDto;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
+import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +27,30 @@ public class AuthnService {
 
     private final AuthnRepository authnRepository;
 
-    public AuthnResponseDto login(AuthnRequestDto requestDto){
+    public AuthnCreateResponseDto createUser(AuthnCreateVo requestVo) {
+
+        // 중복 회원인지 검사
+        if(authnRepository.existByStudentNumber(requestVo.studentNumber())){
+            throw new IllegalArgumentException("이미 존재하는 회원입니다.");
+        }
+
+        Authn user = Authn.builder()
+                .studentNumber(requestVo.studentNumber())
+                .password(requestVo.password())
+                .role(requestVo.role())
+                .deletedAt(null)
+                .build();
+
+        // 회원 저장
+        authnRepository.save(user);
+
+        return AuthnCreateResponseDto.builder()
+                .studentNumber(user.getStudentNumber())
+                .message("회원 생성 성공")
+                .build();
+    }
+
+    public AuthnResponseDto login(AuthnCreateRequestDto requestDto){
         Authn authn = authnRepository.findByStudentNumber(requestDto.getStudentNumber())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
@@ -39,13 +64,13 @@ public class AuthnService {
                 .build();
     }
 
-    private List<AuthnRequestDto> extractMockUser() {
+    private List<AuthnCreateRequestDto> extractMockUser() {
         try{
             ObjectMapper mapper = new ObjectMapper(); // Json -> Java 변환 도구
             InputStream input = new ClassPathResource("mock/authn.json").getInputStream(); // mock/authn.json 파일 읽기
 
             return Arrays.asList( // requestDto 객체 배열 생성
-                    mapper.readValue(input, AuthnRequestDto[].class));
+                    mapper.readValue(input, AuthnCreateRequestDto[].class));
 
             }catch (IOException e){
             log.error("mock/authn.json 파일 읽기 실패", e);
@@ -53,26 +78,12 @@ public class AuthnService {
         }
     }
 
-    public void createUser() {
-            List<AuthnRequestDto> mockUsers = extractMockUser();
-
-            List<Authn> entities = mockUsers.stream()  // requestDto 객체 배열로 부터 Entity 배열 생성
-                    .map(dto -> Authn.builder()
-                            .studentNumber(dto.getStudentNumber())
-                            .password(dto.getPassword())
-                            .role(AuthnRole.ADMIN)
-                            .deletedAt(null)
-                            .build()).toList();
-
-            authnRepository.saveAll(entities);
-
-    }
 
     @Transactional
     public void deleteUser(String studentNumber){
-        List<AuthnRequestDto> mockUsers = extractMockUser();
+        List<AuthnCreateRequestDto> mockUsers = extractMockUser();
 
-        List<String> studentNumbers = mockUsers.stream().map(AuthnRequestDto::getStudentNumber).toList(); // 객체 배열로 부터 studentNumber 추출
+        List<String> studentNumbers = mockUsers.stream().map(AuthnCreateRequestDto::getStudentNumber).toList(); // 객체 배열로 부터 studentNumber 추출
 
         studentNumbers.forEach(authnRepository::deleteByStudentNumber); // studentNumber 로 유저 삭제
     }

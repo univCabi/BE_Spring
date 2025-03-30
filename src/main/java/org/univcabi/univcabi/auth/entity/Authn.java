@@ -19,7 +19,7 @@ public class Authn {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // DB에서 직접 ID 생성
     private Long id;
 
-    @Column(name="student_number",nullable = false, unique = true, length = 50)
+    @Column(nullable = false, unique = true, length = 50)
     private String studentNumber;
 
     @Column(nullable = false, length = 255)
