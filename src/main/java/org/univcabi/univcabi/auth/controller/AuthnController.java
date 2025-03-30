@@ -16,6 +16,7 @@ import org.univcabi.univcabi.auth.dto.request.AuthnLoginRequestDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnLoginResponseDto;
+import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
@@ -44,7 +45,12 @@ public class AuthnController {
                 AuthnRole.NORMAL
         );
 
-        AuthnCreateResponseDto responseDto = authnService.createUser(requestVo);
+        AuthnCreateVo responseVo = authnService.createUser(requestVo);
+        
+        AuthnCreateResponseDto responseDto = AuthnCreateResponseDto.builder()
+                .studentNumber(responseVo.studentNumber())
+                .message("회원 생성 성공")
+                .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
@@ -56,8 +62,12 @@ public class AuthnController {
                 requestDto.getStudentNumber()
         );
 
-        AuthnDeleteResponseDto responseDto = authnService.deleteUser(requestVo);
+        AuthnDeleteVo responseVo = authnService.deleteUser(requestVo);
 
+        AuthnDeleteResponseDto responseDto = AuthnDeleteResponseDto.builder()
+                .studentNumber(responseVo.studentNumber())
+                .message("회원 삭제 성공")
+                .build();
         return ResponseEntity.ok(responseDto);
     }
 

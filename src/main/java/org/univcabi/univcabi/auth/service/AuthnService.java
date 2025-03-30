@@ -24,7 +24,7 @@ public class AuthnService {
 
     private final AuthnRepository authnRepository;
 
-    public AuthnCreateResponseDto createUser(AuthnCreateVo requestVo) {
+    public AuthnCreateVo createUser(AuthnCreateVo requestVo) {
 
         // 중복 회원인지 검사
         // 예외 처리 필요 나중에! -> 지금 예외가 500 뜨는 상태
@@ -42,14 +42,17 @@ public class AuthnService {
         // 회원 저장
         authnRepository.save(user);
 
-        return AuthnCreateResponseDto.builder()
-                .studentNumber(user.getStudentNumber())
-                .message("회원 생성 성공")
-                .build();
+        AuthnCreateVo responseVo = new AuthnCreateVo(
+                user.getStudentNumber(),
+                user.getPassword(),
+                user.getRole()
+        );
+
+        return responseVo;
     }
 
     @Transactional
-    public AuthnDeleteResponseDto deleteUser(AuthnDeleteVo requestVo){
+    public AuthnDeleteVo deleteUser(AuthnDeleteVo requestVo){
         Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber())
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다"));
 
@@ -60,10 +63,9 @@ public class AuthnService {
         authn.setDeletedAtBySoftDelete(LocalDateTime.now());
         authnRepository.save(authn);
 
-        return AuthnDeleteResponseDto.builder()
-                .studentNumber(authn.getStudentNumber())
-                .message("관리자에 의해 해당 유저는 삭제되었습니다.")
-                .build();
+        AuthnDeleteVo responseVo = new AuthnDeleteVo(authn.getStudentNumber());
+
+        return responseVo;
     }
 
     public AuthnTokenGenerateVo login(AuthnLoginVo requestVo){
