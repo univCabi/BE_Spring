@@ -16,6 +16,6 @@ public interface AuthnRepository extends JpaRepository<Authn, Long> {
     void deleteByStudentNumber(String studentNumber);
 
     // 해당 학번 회원 존재 유무 판단
-    boolean existByStudentNumber(String studentNumber);
+    boolean existsByStudentNumber(String studentNumber);
 
 }

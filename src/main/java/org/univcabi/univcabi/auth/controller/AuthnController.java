@@ -11,13 +11,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.auth.dto.request.AuthnCreateRequestDto;
+import org.univcabi.univcabi.auth.dto.request.AuthnDeleteRequestDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnResponseDto;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
 import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
+import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
 
 @Slf4j
 @RestController
@@ -41,6 +44,18 @@ public class AuthnController {
         AuthnCreateResponseDto responseDto = authnService.createUser(requestVo);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @PostMapping("/delete")
+    public  ResponseEntity<AuthnDeleteResponseDto> deleteUser(@RequestBody @Valid AuthnDeleteRequestDto requestDto){
+
+        AuthnDeleteVo requestVo = new AuthnDeleteVo(
+                requestDto.getStudentNumber()
+        );
+
+        AuthnDeleteResponseDto responseDto = authnService.deleteUser(requestVo);
+
+        return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping("/login")
@@ -104,9 +119,4 @@ public class AuthnController {
                 .body("로그아웃 성공");
     }
 
-    @PostMapping("/delete")
-    public  ResponseEntity<String> deleteUser(){
-        authnService.deleteUser(null);
-        return ResponseEntity.ok("회원 삭제 성공");
-    }
 }

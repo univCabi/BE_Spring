@@ -8,14 +8,17 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.univcabi.univcabi.auth.dto.request.AuthnCreateRequestDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnResponseDto;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
+import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,7 +33,7 @@ public class AuthnService {
     public AuthnCreateResponseDto createUser(AuthnCreateVo requestVo) {
 
         // 중복 회원인지 검사
-        if(authnRepository.existByStudentNumber(requestVo.studentNumber())){
+        if(authnRepository.existsByStudentNumber(requestVo.studentNumber())){
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
 
@@ -47,6 +50,24 @@ public class AuthnService {
         return AuthnCreateResponseDto.builder()
                 .studentNumber(user.getStudentNumber())
                 .message("회원 생성 성공")
+                .build();
+    }
+
+    @Transactional
+    public AuthnDeleteResponseDto deleteUser(AuthnDeleteVo requestVo){
+        Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber())
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다"));
+
+        if (authn.getDeletedAt() != null){
+            throw new IllegalArgumentException("이미 탈퇴된 유저입니다.");
+        }
+
+        authn.setDeletedAtBySoftDelete(LocalDateTime.now());
+        authnRepository.save(authn);
+
+        return AuthnDeleteResponseDto.builder()
+                .studentNumber(authn.getStudentNumber())
+                .message("관리자에 의해 해당 유저는 삭제되었습니다.")
                 .build();
     }
 
@@ -78,13 +99,4 @@ public class AuthnService {
         }
     }
 
-
-    @Transactional
-    public void deleteUser(String studentNumber){
-        List<AuthnCreateRequestDto> mockUsers = extractMockUser();
-
-        List<String> studentNumbers = mockUsers.stream().map(AuthnCreateRequestDto::getStudentNumber).toList(); // 객체 배열로 부터 studentNumber 추출
-
-        studentNumbers.forEach(authnRepository::deleteByStudentNumber); // studentNumber 로 유저 삭제
-    }
 }

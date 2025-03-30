@@ -55,4 +55,8 @@ public class Authn {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 소프트 딜리트용 메서드 ( 영속 상태를 유지하기 위한 메서드 입니다. )
+    public void setDeletedAtBySoftDelete(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }
