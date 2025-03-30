@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
+
 import javax.crypto.SecretKey;
 import java.util.*;
 
@@ -25,7 +27,7 @@ public class JwtTokenProvider {
 
     }
 
-    private String createToken(String studentNumber, String role, long expirationTime) {
+    private String createToken(String studentNumber, AuthnRole role, long expirationTime) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
@@ -33,7 +35,7 @@ public class JwtTokenProvider {
         claims.put("sub",studentNumber);
         claims.put("iat",now);
 
-        Optional.ofNullable(role).ifPresent((String r) -> claims.put("role", r));
+        Optional.ofNullable(role).ifPresent(r-> claims.put("role", r.name())); // ADMIN, NORMAL
 
         return Jwts.builder()
                 .claims(claims)
@@ -43,7 +45,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String generateAccessToken(String studentNumber, String role) {
+    public String generateAccessToken(String studentNumber, AuthnRole role) {
         return createToken(studentNumber, role, accessTokenExpiration);
     }
 

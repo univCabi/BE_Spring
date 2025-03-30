@@ -6,8 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.univcabi.univcabi.auth.dto.response.AuthnResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnLoginResponseDto;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
+import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
 
 @RestController
@@ -15,12 +17,14 @@ import org.univcabi.univcabi.auth.service.TokenService;
 public class TokenController {
 
     private final TokenService tokenService;
+    private final AuthnService authnService;
     private final JwtTokenProvider jwtTokenProvider;
 
+
     @PostMapping("/authn/token/access")
-    public ResponseEntity<AuthnResponseDto> refreshAccessToken(@CookieValue(value = "refreshToken", required = false)String refreshToken){
+    public ResponseEntity<AuthnLoginResponseDto> refreshAccessToken(@CookieValue(value = "refreshToken", required = false)String refreshToken){
         if(refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)){
-            return  ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("유효하지 않은 RefreshToken").build());
+            return  ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnLoginResponseDto.builder().message("유효하지 않은 RefreshToken").build());
         }
 
         String studentNumber = jwtTokenProvider.getStudentNumberFromToken(refreshToken);
@@ -28,13 +32,14 @@ public class TokenController {
 
         if(storedToken == null || !storedToken.equals(refreshToken))
         {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("RefreshToken 불일치").build());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnLoginResponseDto.builder().message("RefreshToken 불일치").build());
         }
 
-        String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber,"USER");
+        AuthnRole role = authnService.getUserRole(studentNumber);
 
-        return ResponseEntity.ok(AuthnResponseDto.builder()
-                .studentNumber(studentNumber)
+        String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber,role);
+
+        return ResponseEntity.ok(AuthnLoginResponseDto.builder()
                 .message("새로운 AccessToken 발급")
                 .accessToken(newAccessToken)
                 .build());

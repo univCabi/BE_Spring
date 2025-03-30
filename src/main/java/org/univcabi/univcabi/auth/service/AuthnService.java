@@ -1,26 +1,20 @@
 package org.univcabi.univcabi.auth.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.univcabi.univcabi.auth.dto.request.AuthnCreateRequestDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
-import org.univcabi.univcabi.auth.dto.response.AuthnResponseDto;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
 import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
+import org.univcabi.univcabi.auth.vo.AuthnLoginVo;
+import org.univcabi.univcabi.auth.vo.AuthnTokenGenerateVo;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 
 @Service
@@ -33,6 +27,7 @@ public class AuthnService {
     public AuthnCreateResponseDto createUser(AuthnCreateVo requestVo) {
 
         // 중복 회원인지 검사
+        // 예외 처리 필요 나중에! -> 지금 예외가 500 뜨는 상태
         if(authnRepository.existsByStudentNumber(requestVo.studentNumber())){
             throw new IllegalArgumentException("이미 존재하는 회원입니다.");
         }
@@ -71,32 +66,21 @@ public class AuthnService {
                 .build();
     }
 
-    public AuthnResponseDto login(AuthnCreateRequestDto requestDto){
-        Authn authn = authnRepository.findByStudentNumber(requestDto.getStudentNumber())
+    public AuthnTokenGenerateVo login(AuthnLoginVo requestVo){
+        Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        if(!authn.getPassword().equals(requestDto.getPassword())){
+        if(!authn.getPassword().equals(requestVo.password())){
             throw new SecurityException("비밀번호 불일치");
         }
 
-        return AuthnResponseDto.builder()
-                .studentNumber(authn.getStudentNumber())
-                .message("로그인 성공")
-                .build();
+        return new AuthnTokenGenerateVo(authn.getStudentNumber(), authn.getRole());
     }
 
-    private List<AuthnCreateRequestDto> extractMockUser() {
-        try{
-            ObjectMapper mapper = new ObjectMapper(); // Json -> Java 변환 도구
-            InputStream input = new ClassPathResource("mock/authn.json").getInputStream(); // mock/authn.json 파일 읽기
-
-            return Arrays.asList( // requestDto 객체 배열 생성
-                    mapper.readValue(input, AuthnCreateRequestDto[].class));
-
-            }catch (IOException e){
-            log.error("mock/authn.json 파일 읽기 실패", e);
-            return List.of();
-        }
+    public AuthnRole getUserRole(String studentNumber){
+        return authnRepository.findByStudentNumber(studentNumber)
+                .map(Authn::getRole)
+                .orElseThrow(()->new IllegalArgumentException("존재하지 않는 유저입니다."));
     }
 
 }
