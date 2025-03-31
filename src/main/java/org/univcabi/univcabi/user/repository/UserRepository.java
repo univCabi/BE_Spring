@@ -6,5 +6,5 @@ import org.univcabi.univcabi.user.entity.User;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long>, UserRepositoryCustom{
-
+    Optional<User> findUserByStudentNumber(String studentNumber);
 }

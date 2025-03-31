@@ -3,12 +3,14 @@ package org.univcabi.univcabi.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 import org.univcabi.univcabi.user.entity.User;
 import org.univcabi.univcabi.user.repository.UserRepository;
 import org.univcabi.univcabi.user.vo.RentCabinetInfoVo;
 import org.univcabi.univcabi.user.vo.UserProfileVo;
+import org.univcabi.univcabi.user.vo.UserVisibilityVo;
 
 import java.util.logging.ErrorManager;
 
@@ -49,5 +51,13 @@ public class UserService {
                 user.getPhoneNumber(),
                 rentCabinetInfoVo
         );
+    }
+
+    @Transactional
+    public void updateUserVisibility(UserVisibilityVo requestVo){
+        User user = userRepository.findUserByStudentNumber(requestVo.studentNumber())
+                .orElseThrow(()-> new RuntimeException("User를 찾을 수 없습니다."));
+
+        user.changeVisibility(requestVo.isVisible());
     }
 }

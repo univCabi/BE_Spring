@@ -61,7 +61,6 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-
     @Builder(toBuilder = true)
     private User(Long id, String name, String affiliation, String phoneNumber, Building building, Boolean isVisible, Authn authn, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;
@@ -74,5 +73,10 @@ public class User {
         this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
         this.updatedAt = updatedAt == null ? LocalDateTime.now() : updatedAt;
         this.deletedAt = deletedAt;
+    }
+
+    // 사용자의 정보 공개 유무를 바꿀때만 사용
+    public void changeVisibility(Boolean isVisible){
+        this.isVisible = isVisible;
     }
 }
