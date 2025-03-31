@@ -12,7 +12,7 @@ public class UserProfileResponseDto {
     private String affiliation;
     private String studentNumber;
     private String phoneNumber;
-    private RentCabinetInfoDto rentCabinetInfoDto;
+    private RentCabinetInfoDto rentCabinetInfo;
 
     // 정적 팩토리 메서드
     public static UserProfileResponseDto of(UserProfileVo vo){
@@ -22,7 +22,7 @@ public class UserProfileResponseDto {
                 .affiliation(vo.affiliation())
                 .studentNumber(vo.studentNumber())
                 .phoneNumber(vo.phoneNumber())
-                .rentCabinetInfoDto(
+                .rentCabinetInfo(
                         vo.rentCabinetInfoVo() == null ? null : RentCabinetInfoDto.of(vo.rentCabinetInfoVo())
                 )
                 .build();
