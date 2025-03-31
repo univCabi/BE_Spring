@@ -16,7 +16,6 @@ import org.univcabi.univcabi.auth.dto.request.AuthnLoginRequestDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnLoginResponseDto;
-import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
@@ -42,7 +41,7 @@ public class AuthnController {
         AuthnCreateVo requestVo = new AuthnCreateVo(
                 requestDto.getStudentNumber(),
                 requestDto.getPassword(),
-                AuthnRole.NORMAL
+                requestDto.getRole()
         );
 
         AuthnCreateVo responseVo = authnService.createUser(requestVo);

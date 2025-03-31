@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
 
 
 @Getter
@@ -14,4 +15,5 @@ import lombok.NoArgsConstructor;
 public class AuthnCreateRequestDto {
     private String studentNumber;
     private String password;
+    private AuthnRole role = AuthnRole.NORMAL;
 }
