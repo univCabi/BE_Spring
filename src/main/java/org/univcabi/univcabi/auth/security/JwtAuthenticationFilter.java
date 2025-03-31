@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.univcabi.univcabi.util.TokenUtils.resolveToken;
+
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -42,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             String token = resolveToken(request);
-
+            // 나중에 null 처리 로직 리팩토링 필요해 보임
             if (token != null) {
                 try {
                     if (jwtTokenProvider.validateToken(token)) {
@@ -125,11 +127,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.info("JWT 인증 성공 : {}",studentNumber);
     }
 
-    private String resolveToken(HttpServletRequest request){
-        String bearerToken = request.getHeader("Authorization");
-        if(bearerToken != null && bearerToken.startsWith("Bearer ")){
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
 }
