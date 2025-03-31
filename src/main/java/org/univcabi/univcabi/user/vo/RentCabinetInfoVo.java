@@ -8,6 +8,7 @@ public record RentCabinetInfoVo (
          String building,
          Integer floor,
          Integer cabinetNumber,
+         String status,
          LocalDateTime startDate,
          LocalDateTime endDate
 ) {
