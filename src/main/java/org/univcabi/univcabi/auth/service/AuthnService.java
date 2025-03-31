@@ -52,7 +52,7 @@ public class AuthnService {
     }
 
     @Transactional
-    public AuthnDeleteVo deleteUser(AuthnDeleteVo requestVo){
+    public AuthnDeleteVo softDeleteUserByStudentNumber(AuthnDeleteVo requestVo){
         Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber())
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다"));
 
@@ -68,7 +68,7 @@ public class AuthnService {
         return responseVo;
     }
 
-    public AuthnTokenGenerateVo login(AuthnLoginVo requestVo){
+    public AuthnTokenGenerateVo loginByStudentNumberAndPassword(AuthnLoginVo requestVo){
         Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber())
                 .orElseThrow(()-> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
