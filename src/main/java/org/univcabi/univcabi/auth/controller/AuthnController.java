@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.auth.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -9,11 +10,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.univcabi.univcabi.auth.dto.AuthnRequestDto;
-import org.univcabi.univcabi.auth.dto.AuthnResponseDto;
+import org.univcabi.univcabi.auth.dto.request.AuthnCreateRequestDto;
+import org.univcabi.univcabi.auth.dto.request.AuthnDeleteRequestDto;
+import org.univcabi.univcabi.auth.dto.request.AuthnLoginRequestDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
+import org.univcabi.univcabi.auth.dto.response.AuthnLoginResponseDto;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
+import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
+import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
+import org.univcabi.univcabi.auth.vo.AuthnLoginVo;
+import org.univcabi.univcabi.auth.vo.AuthnTokenGenerateVo;
 
 @Slf4j
 @RestController
@@ -26,43 +35,68 @@ public class AuthnController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/create")
-    public ResponseEntity<String> createUser(){
-        authnService.createUser(null); // Test 를 위해 null 사용
-        return ResponseEntity.ok("회원 생성 성공");
+    public ResponseEntity<AuthnCreateResponseDto> createUser(@RequestBody @Valid AuthnCreateRequestDto requestDto){
+        // studentNumber, password, role 파라미터로 User 생성
+        AuthnCreateVo requestVo = new AuthnCreateVo(
+                requestDto.getStudentNumber(),
+                requestDto.getPassword(),
+                requestDto.getRole()
+        );
+
+        AuthnCreateVo responseVo = authnService.createUser(requestVo);
+
+        AuthnCreateResponseDto responseDto = AuthnCreateResponseDto.builder()
+                .studentNumber(responseVo.studentNumber())
+                .message("회원 생성 성공")
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @PostMapping("/delete")
+    public  ResponseEntity<AuthnDeleteResponseDto> deleteUserByStudentNumber(@RequestBody @Valid AuthnDeleteRequestDto requestDto){
+        // studentNumber 로 User 삭제
+        AuthnDeleteVo requestVo = new AuthnDeleteVo(
+                requestDto.getStudentNumber()
+        );
+        // 삭제는 SoftDelete 방식 ( deleted_at의 값을 null -> LocalDate.now() )
+        AuthnDeleteVo responseVo = authnService.softDeleteUserByStudentNumber(requestVo);
+
+        AuthnDeleteResponseDto responseDto = AuthnDeleteResponseDto.builder()
+                .studentNumber(responseVo.studentNumber())
+                .message("회원 삭제 성공")
+                .build();
+        return ResponseEntity.ok(responseDto);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthnResponseDto> login(@RequestBody AuthnRequestDto requestDto){
-        try{
-            AuthnResponseDto responseDto = authnService.login(requestDto);
+    public ResponseEntity<AuthnLoginResponseDto> loginByStudentNumberAndPassword(@RequestBody @Valid AuthnLoginRequestDto requestDto){
+        AuthnLoginVo requestVo = new AuthnLoginVo(
+                requestDto.getStudentNumber(),
+                requestDto.getPassword()
+        );
 
-            String accessToken = jwtTokenProvider.generateAccessToken(responseDto.getStudentNumber(),"USER");
-            String refreshToken = jwtTokenProvider.generateRefreshToken(responseDto.getStudentNumber());
+        AuthnTokenGenerateVo tokenVo = authnService.loginByStudentNumberAndPassword(requestVo);
 
-            tokenService.storeRefreshToken(responseDto.getStudentNumber(),refreshToken);
+        String accessToken = jwtTokenProvider.generateAccessToken(
+                tokenVo.studentNumber(),
+                tokenVo.role());
 
-            ResponseCookie refreshCookie = tokenService.createRefreshTokenCookie(refreshToken);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(requestDto.getStudentNumber());
 
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE,refreshCookie.toString())
-                    .body(AuthnResponseDto.builder()
-                            .studentNumber(responseDto.getStudentNumber())
-                            .message("로그인 성공")
-                            .accessToken(accessToken)
-                            .build());
+        ResponseCookie refreshCookie = tokenService.createRefreshTokenCookie(refreshToken);
+        // 로그인 성공시 accessToken 발급 ( 응답의 body 값 )
+        AuthnLoginResponseDto responseDto = AuthnLoginResponseDto.builder().accessToken(accessToken).build();
 
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE,refreshCookie.toString())
+                .body(responseDto);
 
-        } catch (IllegalArgumentException e){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("존재하지 않는 유저입니다.").build());
-        }catch (SecurityException e){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthnResponseDto.builder().message("비밀번호가 옳바르지 않습니다.").build());
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(AuthnResponseDto.builder().message("서버 오류").build());
-        }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(){
+    public ResponseEntity<String> logoutByJwtToken(){
+        // User 로그아웃 로직 토큰에 있는 JWT로 로그아웃 하므로 서비스로직이 필요하지 않음
         if(SecurityContextHolder.getContext().getAuthentication()==null) {
             return ResponseEntity.badRequest().body("인증되지 않은 요청입니다.");
         }
@@ -92,9 +126,4 @@ public class AuthnController {
                 .body("로그아웃 성공");
     }
 
-    @PostMapping("/delete")
-    public  ResponseEntity<String> deleteUser(){
-        authnService.deleteUser(null);
-        return ResponseEntity.ok("회원 삭제 성공");
-    }
 }

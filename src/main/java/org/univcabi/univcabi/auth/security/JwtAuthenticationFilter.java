@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
+import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
 
 import java.io.IOException;
@@ -25,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
     private final TokenService tokenService;
+    private final AuthnService authnService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -53,9 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
                             String studentNumber = jwtTokenProvider.getStudentNumberFromToken(refreshToken);
                             String storedRefreshToken = tokenService.getRefreshToken(studentNumber);
-
                             if (refreshToken.equals(storedRefreshToken)) {
-                                String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber, "USER");
+                                AuthnRole role = authnService.getUserRole(studentNumber);
+                                String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber, role);
                                 response.setHeader("Authorization", "Bearer " + newAccessToken);
                                 log.info("새로운 AccessToken 발급 및 쿠키 저장 완료");
                                 authenticateUser(newAccessToken);

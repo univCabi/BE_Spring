@@ -19,7 +19,7 @@ public class Authn {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // DB에서 직접 ID 생성
     private Long id;
 
-    @Column(name="student_number",nullable = false, unique = true, length = 50)
+    @Column(nullable = false, unique = true, length = 50)
     private String studentNumber;
 
     @Column(nullable = false, length = 255)
@@ -55,4 +55,8 @@ public class Authn {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 소프트 딜리트용 메서드 ( 영속 상태를 유지하기 위한 메서드 입니다. )
+    public void setDeletedAtBySoftDelete(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }

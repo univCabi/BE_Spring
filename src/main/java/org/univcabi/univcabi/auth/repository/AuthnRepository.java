@@ -15,5 +15,7 @@ public interface AuthnRepository extends JpaRepository<Authn, Long> {
     // 삭제
     void deleteByStudentNumber(String studentNumber);
 
-    // 생성의 save 는 JPA 제공
+    // 해당 학번 회원 존재 유무 판단
+    boolean existsByStudentNumber(String studentNumber);
+
 }
