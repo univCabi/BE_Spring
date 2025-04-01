@@ -119,7 +119,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void authenticateUser(String token) {
-        String studentNumber =jwtTokenProvider.getStudentNumberFromToken(token);
+        String studentNumber = jwtTokenProvider.getStudentNumberFromToken(token);
         UserDetails userDetails = userDetailsService.loadUserByUsername(studentNumber);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());

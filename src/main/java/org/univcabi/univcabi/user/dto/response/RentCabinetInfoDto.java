@@ -20,16 +20,21 @@ public class RentCabinetInfoDto {
     private Integer leftDate;
 
     // UserProfileResponseDto 의 정적 펙토리 메서드에 포함 되어 있음
-    public static RentCabinetInfoDto of(RentCabinetInfoVo vo){
+    public static RentCabinetInfoDto of(String building,
+                                        Integer floor,
+                                        Integer cabinetNumber,
+                                        String status,
+                                        LocalDateTime startDate,
+                                        LocalDateTime endDate,
+                                        Integer leftDate){
         return RentCabinetInfoDto.builder()
-                .building(vo.building())
-                .floor(vo.floor())
-                .cabinetNumber(vo.cabinetNumber())
-                .startDate(vo.startDate())
-                .status(vo.status())
-                .startDate(vo.startDate())
-                .endDate(vo.endDate())
-                .leftDate(vo.leftDate())
+                .building(building)
+                .floor(floor)
+                .cabinetNumber(cabinetNumber)
+                .status(status)
+                .startDate(startDate)
+                .endDate(endDate)
+                .leftDate(leftDate)
                 .build();
     }
 }

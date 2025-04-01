@@ -5,12 +5,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.user.dto.request.UserVisibilityRequestDto;
 import org.univcabi.univcabi.user.dto.response.UserProfileResponseDto;
 import org.univcabi.univcabi.user.service.UserService;
 import org.univcabi.univcabi.user.vo.UserProfileVo;
 import org.univcabi.univcabi.user.vo.UserVisibilityVo;
+import org.springframework.security.core.Authentication;
+
 
 import static org.univcabi.univcabi.util.TokenUtils.resolveToken;
 
@@ -19,16 +20,13 @@ import static org.univcabi.univcabi.util.TokenUtils.resolveToken;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
 
 
     // User profile 에 필요한 정보 조회
     @GetMapping("/profile/me")
-    public ResponseEntity<UserProfileResponseDto> getMyProfile(HttpServletRequest request){
-        // 토큰 값으로 부터 studentNumber 정보를 얻는 로직
-        String token = resolveToken(request);
-        String studentNumber = jwtTokenProvider.getStudentNumberFromToken(token);
+    public ResponseEntity<UserProfileResponseDto> getMyProfile(Authentication authentication){
+        String studentNumber = authentication.getName();
 
         UserProfileVo requestVo = userService.getUserProfileByStudentNumber(studentNumber);
 
@@ -39,9 +37,8 @@ public class UserController {
 
     // isVisibility 속성 변경
     @PostMapping("/profile/me")
-    public ResponseEntity<Void> updateUserVisibility(@RequestBody @Valid UserVisibilityRequestDto requestDto,HttpServletRequest request){
-        String token = resolveToken(request);
-        String studentNumber = jwtTokenProvider.getStudentNumberFromToken(token);
+    public ResponseEntity<Void> updateUserVisibility(@RequestBody @Valid UserVisibilityRequestDto requestDto,Authentication authentication){
+        String studentNumber = authentication.getName();
 
         // isVisibility 속성과 JWT로부터 얻은 studentNumber 로 requestVo 생성
         UserVisibilityVo requestVo = new UserVisibilityVo(studentNumber,requestDto.getIsVisible());
