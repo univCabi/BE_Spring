@@ -45,4 +45,11 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/mockup")
+    public ResponseEntity<Void> resetDataBase(){
+        userService.resetDatabase();
+
+        return ResponseEntity.ok().build();
+    }
 }

@@ -105,7 +105,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/auth/login",
                 "/api/auth/signup",
                 "/api/auth/refresh",
-                "/api/public"   // 퍼블릭 API 경로 등
+                "/api/public",   // 퍼블릭 API 경로 등
+                "/api/user/mockup"
         );
 
         String path = request.getRequestURI();
