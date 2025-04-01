@@ -22,6 +22,8 @@ public class UserController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
 
+
+    // User profile 에 필요한 정보 조회
     @GetMapping("/profile/me")
     public ResponseEntity<UserProfileResponseDto> getMyProfile(HttpServletRequest request){
         // 토큰 값으로 부터 studentNumber 정보를 얻는 로직
@@ -35,17 +37,21 @@ public class UserController {
         return ResponseEntity.ok(responseDto);
     }
 
+    // isVisibility 속성 변경
     @PostMapping("/profile/me")
     public ResponseEntity<Void> updateUserVisibility(@RequestBody @Valid UserVisibilityRequestDto requestDto,HttpServletRequest request){
         String token = resolveToken(request);
         String studentNumber = jwtTokenProvider.getStudentNumberFromToken(token);
 
+        // isVisibility 속성과 JWT로부터 얻은 studentNumber 로 requestVo 생성
         UserVisibilityVo requestVo = new UserVisibilityVo(studentNumber,requestDto.getIsVisible());
         userService.updateUserVisibility(requestVo);
 
         return ResponseEntity.ok().build();
     }
 
+
+    // 데이터 베이스 초기화
     @PostMapping("/mockup")
     public ResponseEntity<Void> resetDataBase(){
         userService.resetDatabase();

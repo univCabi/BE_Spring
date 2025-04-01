@@ -36,6 +36,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다."));
 
         // 해당 유저의 cabinetHistory 조회 (지금 빌리고 있는 것)
+        // rentCabinetInfo 에 필요한 정보 조회
         RentCabinetInfoVo rentCabinetInfoVo = userRepository
                 .getLatestCabinetHistoryByStudentNumber(studentNumber)
                 .map(history -> {
@@ -71,6 +72,8 @@ public class UserService {
         user.changeVisibility(requestVo.isVisible());
     }
 
+
+    // 데이터 베이스 초기화
     @Transactional
     public void resetDatabase(){
         List<String> scripts = List.of(
