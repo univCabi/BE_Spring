@@ -64,14 +64,14 @@ public class UserService {
         );
     }
 
+    // User정보의 isVisible 파라미터 수정
     @Transactional
     public void updateUserVisibility(UserVisibilityVo requestVo){
-        User user = userRepository.findUserByStudentNumber(requestVo.studentNumber())
-                .orElseThrow(()-> new RuntimeException("User를 찾을 수 없습니다."));
-
-        user.changeVisibility(requestVo.isVisible());
+        if(userRepository.updateUserVisibilityByStudentNumber(
+                requestVo.studentNumber(),requestVo.isVisible())==0){
+            throw new RuntimeException("해당 User의 정보를 수정할 수 없습니다.");
+        }
     }
-
 
     // 데이터 베이스 초기화
     @Transactional

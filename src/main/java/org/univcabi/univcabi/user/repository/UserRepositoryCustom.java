@@ -10,4 +10,7 @@ public interface UserRepositoryCustom {
     Optional<CabinetHistory> getLatestCabinetHistoryByStudentNumber(String studentNumber);
 
     Optional<User> findUserByStudentNumber(String studentNumber);
+
+    long updateUserVisibilityByStudentNumber(String studentNumber, Boolean isVisible);
+
 }

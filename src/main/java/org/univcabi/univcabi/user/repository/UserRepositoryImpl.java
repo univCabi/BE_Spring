@@ -1,6 +1,7 @@
 package org.univcabi.univcabi.user.repository;
 
 
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -62,4 +63,22 @@ public class UserRepositoryImpl implements UserRepositoryCustom{
                         .fetchOne()
         );
     }
+
+    @Override
+    public long updateUserVisibilityByStudentNumber(String studentNumber, Boolean isVisible){
+        QUser user = QUser.user;
+        QAuthn authn =QAuthn.authn;
+
+        return queryFactory
+                .update(user)
+                .set(user.isVisible,isVisible)
+                .where(user.authn.id.eq(
+                        JPAExpressions
+                                .select(authn.id)
+                                .from(authn)
+                                .where(authn.studentNumber.eq(studentNumber))
+                ))
+                .execute();
+    }
+
 }
