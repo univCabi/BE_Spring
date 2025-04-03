@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 "/authn/create",
                                 "/authn/delete",
                                 "/authn/token/access",
+                                "/user/mockup",
                                 "/api/v1/cabinet/**")
                         .permitAll() //로그인 api는 인증 없이 가능
                         .anyRequest().authenticated())
