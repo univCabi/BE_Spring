@@ -12,9 +12,12 @@ public enum ExceptionStatus {
 
     // AUTH ERROR CODE
     AUTH_INVALID_PARAMS(HttpStatus.BAD_REQUEST, "잘못된 인자로 요청했습니다"),
+    AUTH_DUPLICATE_STUDENT_NUMBER(HttpStatus.BAD_REQUEST,"이미 존재하는 유저입니다."),
+    AUTH_DELETED_USER(HttpStatus.BAD_REQUEST,"탈퇴된 유저입니다."),
     AUTH_BAD_SESSION_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 세션으로 인한 요청 방법입니다."),
     AUTH_COOKIE_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "잘못된 쿠키로 접근했습니다"),
     AUTH_SESSION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "잘못된 세션으로 접근했습니다"),
+    AUTH_MISMATCH_PASSWORD(HttpStatus.UNAUTHORIZED,"비밀번호 불일치"),
 
     // CABINET ERROR CODE
     CABINET_INVALID_ID(HttpStatus.BAD_REQUEST, "잘못된 사물함 ID입니다"),
