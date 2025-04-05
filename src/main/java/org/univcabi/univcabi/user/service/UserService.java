@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
+import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
 import org.univcabi.univcabi.user.repository.UserRepository;
 import org.univcabi.univcabi.user.vo.RentCabinetInfoVo;
@@ -22,6 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.ErrorManager;
 
+import static org.univcabi.univcabi.exception.ExceptionStatus.*;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -33,7 +36,7 @@ public class UserService {
     public UserProfileVo getUserProfileByStudentNumber(String studentNumber) {
         // 유저 정보 가져오기
         User user = userRepository.findUserByStudentNumber(studentNumber)
-                .orElseThrow(() -> new RuntimeException("User를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ServiceException(USER_NOT_FOUND));
 
         // 해당 유저의 cabinetHistory 조회 (지금 빌리고 있는 것)
         // rentCabinetInfo 에 필요한 정보 조회
@@ -69,7 +72,7 @@ public class UserService {
     public void updateUserVisibility(UserVisibilityVo requestVo){
         if(userRepository.updateUserVisibilityByStudentNumber(
                 requestVo.studentNumber(),requestVo.isVisible())==0){
-            throw new RuntimeException("해당 User의 정보를 수정할 수 없습니다.");
+            throw new ServiceException(USER_VISIBILITY_UPDATE_FAILED);
         }
     }
 
@@ -107,8 +110,8 @@ public class UserService {
                     .reduce((str1,str2)->str1+"\n"+str2)
                     .orElse("");
         }
-        catch (Exception e) { // 나중에 고치자
-            throw  new RuntimeException("로딩 실패");
+        catch (IOException e) {
+            throw new ServiceException(SQL_FILE_LOAD_FAILED);
         }
     }
 }
