@@ -2,6 +2,7 @@ package org.univcabi.univcabi.auth.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import java.io.IOException;
 
 import static org.univcabi.univcabi.exception.ExceptionStatus.AUTH_MISMATCH_REFRESH_TOKEN;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class TokenController {
@@ -32,10 +34,12 @@ public class TokenController {
                                                                     HttpServletResponse response) throws IOException {
 
         // 토큰 만료 확인 ( json 형태의 응답이 필요해서 Servlet 사용)
-        if(jwtTokenProvider.validateToken(refreshToken)){
+        if(!jwtTokenProvider.validateToken(refreshToken)){
+            log.warn("RefreshToken 만료");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"messages\": [{\"token_class\": \"RefreshToken\"}]}");
+            return null;
         }
 
         String studentNumber = jwtTokenProvider.getStudentNumberFromToken(refreshToken);
@@ -49,6 +53,8 @@ public class TokenController {
         // 새로운 accessToken 발급
         AuthnRole role = authnService.getUserRole(studentNumber);
         String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber,role);
+
+        log.info("RefreshToken 인증 성공, 새로운 AccessToken 발급 완료");
 
         return ResponseEntity.ok(AuthnLoginResponseDto.builder()
                 .accessToken(newAccessToken)

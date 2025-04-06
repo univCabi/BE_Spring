@@ -89,6 +89,9 @@ public class AuthnController {
 
         String refreshToken = jwtTokenProvider.generateRefreshToken(requestDto.getStudentNumber());
 
+        // redis에 refreshToken 저장
+        tokenService.storeRefreshToken(tokenVo.studentNumber(),refreshToken);
+
         ResponseCookie refreshCookie = tokenService.createRefreshTokenCookie(refreshToken);
         // 로그인 성공시 accessToken 발급 ( 응답의 body 값 )
         AuthnLoginResponseDto responseDto = AuthnLoginResponseDto.builder().accessToken(accessToken).build();

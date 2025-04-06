@@ -27,8 +27,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
-    private final TokenService tokenService;
-    private final AuthnService authnService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -44,17 +42,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String accessToken = resolveToken(request);
             if (jwtTokenProvider.validateToken(accessToken)) {
-                // accessToken 정상적인 경우 인증 정보 세팅
                 authenticateUser(accessToken);
-            } else {
-                log.warn("AccessToken 만료");
-
-                // 401 && response.data.messages[0].token_class
+                filterChain.doFilter(request, response); // 누락시에 controller 로 그 다음 요청이 이동하지않음 중요!
+                return;
+            } else{
+                log.warn("AccessToken 만료됨");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"messages\": [{\"token_class\": \"AccessToken\"}]}");
-            }
-        } catch (Exception e) {
+                return;}
+        }catch (Exception e) {
             // 필터 처리 중 발생한 예외는 여기서 잡아서 원래 예외를 유지
             log.error("JWT 필터 처리 중 예외 발생: {}", e.getMessage(), e);
             // 이미 응답이 커밋되지 않았다면 에러 전송
@@ -69,12 +66,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean shouldSkipFilter(HttpServletRequest request) {
         // 인증이 필요 없는 경로 목록
         final List<String> excludedPaths = Arrays.asList(
-                "/api/auth/login",
+                "/api/authn/login",
+                "/authn/login",
                 "/api/auth/signup",
                 "/api/auth/refresh",
                 "/api/public",   // 퍼블릭 API 경로 등
                 "/api/user/mockup",
-                "/api/authn/token/access"
+                "/authn/token/access"
         );
 
         String path = request.getRequestURI();
