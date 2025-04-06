@@ -28,8 +28,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
-    private final TokenService tokenService;
-    private final AuthnService authnService;
+
 
 
     @Bean
@@ -53,7 +52,7 @@ public class SecurityConfig {
                                 "/api/v1/cabinet/**")
                         .permitAll() //로그인 api는 인증 없이 가능
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,customUserDetailsService,tokenService,authnService),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,customUserDetailsService),
                         UsernamePasswordAuthenticationFilter.class); // JWT 인증 필터 추가
 
         return http.build();
