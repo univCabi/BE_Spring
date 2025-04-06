@@ -2,6 +2,9 @@ package org.univcabi.univcabi.util;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.univcabi.univcabi.exception.UtilException;
+
+import static org.univcabi.univcabi.exception.ExceptionStatus.AUTH_COOKIE_UNAUTHORIZED;
 
 public class TokenUtils {
     // util 클래스이므로 인스턴스 호출 금지
@@ -13,9 +16,8 @@ public class TokenUtils {
             return bearerToken.substring(7);
         }
         else{
-            // 나중에 null 처리 로직 리팩토링 필요해 보임
-            return null;
-//          throw new IllegalArgumentException("유효하지 않은 accessToken");
+            // 잘못된 토큰 요청시 예외 처리
+          throw new UtilException(AUTH_COOKIE_UNAUTHORIZED);
         }
     }
 }

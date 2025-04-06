@@ -18,6 +18,7 @@ public enum ExceptionStatus {
     AUTH_COOKIE_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "잘못된 쿠키로 접근했습니다"),
     AUTH_SESSION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "잘못된 세션으로 접근했습니다"),
     AUTH_MISMATCH_PASSWORD(HttpStatus.UNAUTHORIZED,"비밀번호 불일치"),
+    AUTH_MISMATCH_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED,"리프레시 토큰 불일치."),
 
     // CABINET ERROR CODE
     CABINET_INVALID_ID(HttpStatus.BAD_REQUEST, "잘못된 사물함 ID입니다"),

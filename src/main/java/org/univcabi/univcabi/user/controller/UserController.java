@@ -13,7 +13,6 @@ import org.univcabi.univcabi.user.vo.UserVisibilityVo;
 import org.springframework.security.core.Authentication;
 
 
-import static org.univcabi.univcabi.util.TokenUtils.resolveToken;
 
 @RestController
 @RequestMapping("/user")

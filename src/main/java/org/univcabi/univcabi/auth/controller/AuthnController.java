@@ -118,8 +118,9 @@ public class AuthnController {
         UserDetails userDetails = (UserDetails) principal;
         String studentNumber = userDetails.getUsername();
 
+        //해당 사용자의 contextHolder 정보 삭제
         SecurityContextHolder.clearContext();
-
+        //해당 사용자의 redis의 refreshToken 정보 삭제
         tokenService.deleteRefreshToken(studentNumber);
 
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken","")

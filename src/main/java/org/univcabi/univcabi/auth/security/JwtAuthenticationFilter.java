@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
 
@@ -43,50 +42,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            String token = resolveToken(request);
-            // 나중에 null 처리 로직 리팩토링 필요해 보임
-            if (token != null) {
-                try {
-                    if (jwtTokenProvider.validateToken(token)) {
-                        authenticateUser(token);
-                    }
-                } catch (ExpiredJwtException e) {
-                    log.warn("AccessToken이 만료됨. RefreshToken으로 재발급 시도");
+            String accessToken = resolveToken(request);
+            if (jwtTokenProvider.validateToken(accessToken)) {
+                // accessToken 정상적인 경우 인증 정보 세팅
+                authenticateUser(accessToken);
+            } else {
+                log.warn("AccessToken 만료");
 
-                    try {
-                        String refreshToken = tokenService.getRefreshTokenFromCookie(request);
-                        if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
-                            String studentNumber = jwtTokenProvider.getStudentNumberFromToken(refreshToken);
-                            String storedRefreshToken = tokenService.getRefreshToken(studentNumber);
-                            if (refreshToken.equals(storedRefreshToken)) {
-                                AuthnRole role = authnService.getUserRole(studentNumber);
-                                String newAccessToken = jwtTokenProvider.generateAccessToken(studentNumber, role);
-                                response.setHeader("Authorization", "Bearer " + newAccessToken);
-                                log.info("새로운 AccessToken 발급 및 쿠키 저장 완료");
-                                authenticateUser(newAccessToken);
-                            } else {
-                                log.error("RefreshToken이 유효하지 않음. 재발급 불가");
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh Token이 유효하지 않음");
-                                return;
-                            }
-                        } else {
-                            log.error("RefreshToken이 존재하지 않거나 유효하지 않음.");
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh Token이 유효하지 않음");
-                            return;
-                        }
-                    } catch (Exception refreshException) {
-                        log.error("RefreshToken 처리 중 오류 발생: {}", refreshException.getMessage());
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "인증 처리 중 오류 발생");
-                        return;
-                    }
-                } catch (Exception e) {
-                    log.error("Token 처리 중 예외 발생: {}", e.getMessage());
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "인증 처리 중 오류 발생");
-                    return;
-                }
+                // 401 && response.data.messages[0].token_class
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"messages\": [{\"token_class\": \"AccessToken\"}]}");
             }
-
-            filterChain.doFilter(request, response);
         } catch (Exception e) {
             // 필터 처리 중 발생한 예외는 여기서 잡아서 원래 예외를 유지
             log.error("JWT 필터 처리 중 예외 발생: {}", e.getMessage(), e);
@@ -106,7 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/auth/signup",
                 "/api/auth/refresh",
                 "/api/public",   // 퍼블릭 API 경로 등
-                "/api/user/mockup"
+                "/api/user/mockup",
+                "/api/authn/token/access"
         );
 
         String path = request.getRequestURI();
@@ -124,6 +92,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
 
+        // JWT는 stateless 이기 때문에 매 요청마다 토큰을 검사해서 인증 정보를 새로 세팅 해줌
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("JWT 인증 성공 : {}",studentNumber);
     }
