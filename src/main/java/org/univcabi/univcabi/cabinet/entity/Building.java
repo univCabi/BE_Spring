@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "buildings")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -30,4 +28,14 @@ public class Building {
     private Integer width;
 
     private Integer height;
+
+    @Builder(toBuilder = true)
+    private Building(Long id, BuildingName name, Integer floor, String section, Integer width, Integer height) {
+        this.id = id;
+        this.name = name;
+        this.floor = floor;
+        this.section = section;
+        this.width = width;
+        this.height = height;
+    }
 }

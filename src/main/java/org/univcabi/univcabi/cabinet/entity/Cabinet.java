@@ -3,6 +3,7 @@ package org.univcabi.univcabi.cabinet.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -53,5 +54,18 @@ public class Cabinet {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Builder(toBuilder = true)
+    private Cabinet(Long id, Building buildingId, User userId, String cabinetNumber, CabinetStatus status, LocalDateTime paidAt, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+        this.id = id;
+        this.buildingId = buildingId;
+        this.userId = userId;
+        this.cabinetNumber = cabinetNumber;
+        this.status = status;
+        this.paidAt = paidAt;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.deletedAt = deletedAt;
+    }
 
 }
