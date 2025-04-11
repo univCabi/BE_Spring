@@ -32,6 +32,7 @@ public enum ExceptionStatus {
     CABINET_RETURN_FAILED(HttpStatus.CONFLICT, "사물함 반납에 실패했습니다"),
     CABINET_HISTORY_UPDATE_FAILED(HttpStatus.CONFLICT, "사물함 대여 기록 업데이트에 실패했습니다"),
 
+    CABINET_NOT_ALLOW_RENT(HttpStatus.BAD_REQUEST, "아직 대여 가능 시간이 아닙니다. 반납일 다음날 13시 이후에 대여할 수 있습니다."),
 
     //USER
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다"),
