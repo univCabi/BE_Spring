@@ -1,63 +1,96 @@
 package org.univcabi.univcabi.cabinet.service;
 
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.univcabi.univcabi.auth.entity.Authn;
+import org.univcabi.univcabi.auth.repository.AuthnRepository;
+import org.univcabi.univcabi.cabinet.dto.CabinetKafkaDto;
 import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
+import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
 import org.univcabi.univcabi.cabinet.vo.*;
+import org.univcabi.univcabi.exception.ExceptionStatus;
+import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
+import org.univcabi.univcabi.user.repository.UserRepository;
+import org.univcabi.univcabi.configs.AsyncConfig;
 
+import javax.inject.Qualifier;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
 public class CabinetService {
+    private static final Logger logger = LoggerFactory.getLogger(CabinetService.class);
 
     private final CabinetRepository cabinetRepository;
+    private final UserRepository userRepository;
+    private final AuthnRepository authnRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final CabinetKafkaProducerService kafkaProducerService;
+    private final ReservationQueueManager queueManager;
 
-    public CabinetService(CabinetRepository cabinetRepository) {
+    private final CabinetUtilService cabinetUtilService;
+
+    private final CabinetRedisService cabinetRedisService;
+
+    private final Executor cabinetTaskExecutor;
+
+
+    // Redis 키 상수
+
+    public static final String CABINET_RENT_PROCESSING_KEY = "cabinet:processing:rent:";
+    public static final String CABINET_RETURN_PROCESSING_KEY = "cabinet:processing:return:";
+    public static final String CABINET_STATUS_KEY = "cabinet:status:";
+    public static final String CABINET_OPERATION_RESULT_KEY = "cabinet:operation:result:";
+    public static final String CABINET_OPERATION_CHANNEL = "cabinet:operation:channel";
+    private final CabinetFallbackService cabinetFallbackService;
+
+    public CabinetService(
+            CabinetRepository cabinetRepository,
+            UserRepository userRepository,
+            AuthnRepository authnRepository,
+            RedisTemplate<String, Object> redisTemplate,
+            CabinetKafkaProducerService kafkaProducerService,
+            ReservationQueueManager queueManager,
+            CabinetUtilService cabinetUtilService,
+            CabinetRedisService cabinetRedisService,
+            Executor cabinetTaskExecutor, CabinetFallbackService cabinetFallbackService) {
         this.cabinetRepository = cabinetRepository;
+        this.userRepository = userRepository;
+        this.authnRepository = authnRepository;
+        this.redisTemplate = redisTemplate;
+        this.kafkaProducerService = kafkaProducerService;
+        this.queueManager = queueManager;
+        this.cabinetUtilService = cabinetUtilService;
+        this.cabinetRedisService = cabinetRedisService;
+        this.cabinetTaskExecutor = cabinetTaskExecutor;
+        this.cabinetFallbackService = cabinetFallbackService;
     }
 
-    public <T> CabinetPageResponseVo<T> convertToPageResponseVo(
-            Page<T> page, CabinetPageVo requestVo, HttpServletRequest request) {
-
-        int currentPage = requestVo.page() != null ? requestVo.page() : 0;
-        int pageSize = requestVo.pageSize() != null ? requestVo.pageSize() : 12;
-
-        String next = null;
-        if (currentPage < page.getTotalPages() && !page.isEmpty()) {
-            next = ServletUriComponentsBuilder.fromRequest(request)
-                    .replaceQueryParam("page", currentPage + 1)
-                    .replaceQueryParam("pageSize", pageSize)
-                    .build()
-                    .toUriString();
-        }
-
-        String previous = null;
-        if (currentPage > 1) {
-            previous = ServletUriComponentsBuilder.fromRequest(request)
-                    .replaceQueryParam("page", currentPage - 1)
-                    .replaceQueryParam("pageSize", pageSize)
-                    .build()
-                    .toUriString();
-        }
-
-        return new CabinetPageResponseVo<>(
-                Math.toIntExact(page.getTotalElements()),
-                next,
-                previous,
-                page.getContent()
-        );
+    @PostConstruct
+    public void init() {
+        // At startup, clear any stale processing locks
+        cabinetRedisService.clearAllProcessingLocks();
     }
 
     public Page<CabinetVo> findAllCabinetInfo(CabinetPageVo requestVo) {
@@ -89,7 +122,7 @@ public class CabinetService {
         User cabinetOwner = cabinet.getUserId();
 
         // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
-        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
+        boolean isMine = cabinetUtilService.checkIsMine(requestVo.studentNumber(), cabinetOwner);
 
         //TODO: 왜 Boolean 이거여야 하는지 알아보기
         Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : false;
@@ -108,30 +141,253 @@ public class CabinetService {
         );
     }
 
-    @Transactional
-    public CabinetDetailVo rentCabinet(CabinetRentVo requestVo) {
-        Optional<Cabinet> cabinetOptional = cabinetRepository.rentCabinetByCabinetId(requestVo.cabinetId(), requestVo.studentNumber());
+    public CompletableFuture<CabinetDetailVo> rentCabinet(CabinetRentVo requestVo) {
+        Long cabinetId = requestVo.cabinetId();
+        String studentNumber = requestVo.studentNumber();
 
-        if (cabinetOptional.isEmpty()) {
-            throw new RuntimeException("캐비닛을 찾을 수 없습니다.");
+        // 1. Redis에서 캐비닛 상태 확인 - 빠른 경로 체크
+        Object currentStatus = redisTemplate.opsForValue().get(CABINET_STATUS_KEY + cabinetId);
+        if (currentStatus != null && !CabinetStatus.AVAILABLE.toString().equals(currentStatus.toString())) {
+            // 명확한 CABINET_ALREADY_USING 예외 반환
+            logger.info("Cabinet {} is already in use according to Redis status", cabinetId);
+            return CompletableFuture.failedFuture(
+                    new ServiceException(ExceptionStatus.CABINET_ALREADY_USING)
+            );
         }
-        Cabinet cabinet = cabinetOptional.get();
-        Building building = cabinet.getBuildingId();
-        User cabinetOwner = cabinet.getUserId();
 
-        Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : false;
+        // 2. 대여 가능 시간 체크
+        if (cabinetRedisService.isBeforeReleaseTime(cabinetId)) {
+            logger.info("Cabinet {} cannot be rented before release time", cabinetId);
+            return CompletableFuture.failedFuture(
+                    new ServiceException(ExceptionStatus.CABINET_RENT_FAILED)
+            );
+        }
 
-        return new CabinetDetailVo(
-                building.getFloor(),
-                cabinet.getCabinetNumber().substring(0, 1), // section
-                building.getName(),
-                cabinet.getCabinetNumber(),
-                cabinet.getStatus(),
-                isVisible,
-                cabinetOwner != null ? cabinetOwner.getName() : null,
-                true,
-                cabinet.getUpdatedAt() // 만료일
-        );
+        // 3. 프로세싱 중인지 확인
+        if (cabinetRedisService.isProcessingRent(cabinetId)) {
+            logger.info("Cabinet {} is currently being processed for rent", cabinetId);
+            return CompletableFuture.failedFuture(
+                    new ServiceException(ExceptionStatus.CABINET_RENT_FAILED)
+            );
+        }
+
+        // 4. DB 최종 확인
+        Optional<Cabinet> cabinetOpt = cabinetRepository.findById(cabinetId);
+        if (cabinetOpt.isEmpty() ||
+                cabinetOpt.get().getStatus() == CabinetStatus.USING ||
+                cabinetOpt.get().getStatus() == CabinetStatus.OVERDUE) {
+            logger.info("Cabinet {} is not available according to DB status", cabinetId);
+            return CompletableFuture.failedFuture(
+                    new ServiceException(ExceptionStatus.CABINET_ALREADY_USING)
+            );
+        }
+
+        // 5. 락 획득 시도
+        boolean canProceed = queueManager.addToQueueAndAcquireLock(cabinetId, studentNumber);
+        if (!canProceed) {
+            logger.info("Failed to acquire lock for cabinet {}", cabinetId);
+            return CompletableFuture.failedFuture(
+                    new ServiceException(ExceptionStatus.CABINET_RENT_FAILED)
+            );
+        }
+
+        // 6. 임시 상태 설정
+        cabinetRedisService.setTemporaryStatus(cabinetId, CabinetStatus.USING);
+
+        // 나머지 처리...
+        CompletableFuture<CabinetDetailVo> resultFuture = new CompletableFuture<>();
+        setupResultListener(cabinetId, studentNumber, resultFuture);
+        processRentRequestAsync(cabinetId, studentNumber);
+        setupTimeout(cabinetId, studentNumber, resultFuture, 1);
+
+        return resultFuture;
+    }
+
+    /**
+     * 결과 리스너 설정
+     */
+    private void setupResultListener(Long cabinetId, String studentNumber, CompletableFuture<CabinetDetailVo> resultFuture) {
+        // 메시지 리스너 생성
+        MessageListener listener = (message, pattern) -> {
+            try {
+                String messageBody = new String(message.getBody(), StandardCharsets.UTF_8);
+                String expectedValue = cabinetId + ":" + studentNumber;
+
+                if (messageBody.equals(expectedValue) && !resultFuture.isDone()) {
+                    String resultKey = CabinetRedisService.CABINET_OPERATION_RESULT_KEY + cabinetId + ":" + studentNumber;
+                    Map<String, Object> resultMap = (Map<String, Object>) redisTemplate.opsForValue().get(resultKey);
+
+                    if (resultMap != null) {
+                        boolean success = (boolean) resultMap.getOrDefault("success", false);
+
+                        if (!success) {
+                            // 에러 케이스 - 구체적인 에러 메시지 전달
+                            String errorMessage = (String) resultMap.getOrDefault("error", "대여 실패");
+                            resultFuture.completeExceptionally(
+                                    new ServiceException(ExceptionStatus.CABINET_RENT_FAILED)
+                            );
+                        } else {
+                            // 성공 케이스
+                            try {
+                                // 캐비닛 정보 조회
+                                Cabinet cabinet = cabinetRepository.findById(cabinetId).orElseThrow(
+                                        () -> new ServiceException(ExceptionStatus.CABINET_NOT_FOUND)
+                                );
+                                Building building = cabinet.getBuildingId();
+
+                                // 사용자 정보 조회
+                                Authn authn = authnRepository.findByStudentNumber(studentNumber).orElseThrow(
+                                        () -> new ServiceException(ExceptionStatus.USER_NOT_FOUND)
+                                );
+                                User user = authn.getUser();
+
+                                // 응답 생성
+                                CabinetDetailVo detailVo = new CabinetDetailVo(
+                                        building.getFloor(),
+                                        cabinet.getCabinetNumber().substring(0, 1),
+                                        building.getName(),
+                                        cabinet.getCabinetNumber(),
+                                        cabinet.getStatus(),
+                                        user.getIsVisible(),
+                                        user.getName(),
+                                        true,
+                                        cabinet.getUpdatedAt()
+                                );
+
+                                resultFuture.complete(detailVo);
+                            } catch (Exception e) {
+                                resultFuture.completeExceptionally(e);
+                            }
+                        }
+
+                        // 리스너 해제
+                        cabinetRedisService.unregisterListener(cabinetId + ":" + studentNumber);
+                    }
+                }
+            } catch (Exception e) {
+                if (!resultFuture.isDone()) {
+                    resultFuture.completeExceptionally(e);
+                    cabinetRedisService.unregisterListener(cabinetId + ":" + studentNumber);
+                }
+            }
+        };
+
+        // 리스너 등록
+        cabinetRedisService.registerListener(cabinetId + ":" + studentNumber, listener);
+    }
+
+    /**
+     * 비동기적으로 Kafka 또는 폴백 서비스로 대여 요청 처리
+     */
+    private void processRentRequestAsync(Long cabinetId, String studentNumber) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 폴백 서비스 먼저 확인 - 더 빠른 처리를 위해
+                if (cabinetFallbackService.shouldUseFallback()) {
+                    try {
+                        Optional<Cabinet> result = cabinetFallbackService.processRentRequest(
+                                new CabinetKafkaDto.CabinetRentMessage(cabinetId, studentNumber, LocalDateTime.now())
+                        );
+
+                        if (result.isPresent()) {
+                            // 즉시 결과 반환
+                            cabinetRedisService.setOperationResult(cabinetId, studentNumber, true, null);
+                            return;
+                        }
+                    } catch (Exception ignored) {
+                        // 폴백 실패시 무시하고 Kafka로 계속 진행
+                    }
+                }
+
+                // Kafka로 메시지 전송
+                kafkaProducerService.sendRentRequest(cabinetId, studentNumber);
+            } catch (Exception e) {
+                // 실패 시 명시적으로 에러 설정
+                cabinetRedisService.setOperationResult(cabinetId, studentNumber, false, e.getMessage());
+            }
+        }, cabinetTaskExecutor);
+    }
+
+    /**
+     * 타임아웃 설정
+     */
+    private void setupTimeout(Long cabinetId, String studentNumber, CompletableFuture<CabinetDetailVo> resultFuture, int timeoutSeconds) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            if (!resultFuture.isDone()) {
+                try {
+                    // DB에서 최종 상태 확인
+                    Optional<Cabinet> cabinetOpt = cabinetRepository.findById(cabinetId);
+
+                    if (cabinetOpt.isPresent()) {
+                        Cabinet cabinet = cabinetOpt.get();
+
+                        // 실제로 대여됐는지 확인
+                        if (cabinet.getStatus() == CabinetStatus.USING) {
+                            // 성공 케이스 처리
+                            Building building = cabinet.getBuildingId();
+                            Optional<Authn> authnOpt = authnRepository.findByStudentNumber(studentNumber);
+
+                            if (authnOpt.isPresent()) {
+                                User user = authnOpt.get().getUser();
+
+                                CabinetDetailVo detailVo = new CabinetDetailVo(
+                                        building.getFloor(),
+                                        cabinet.getCabinetNumber().substring(0, 1),
+                                        building.getName(),
+                                        cabinet.getCabinetNumber(),
+                                        cabinet.getStatus(),
+                                        user.getIsVisible(),
+                                        user.getName(),
+                                        true,
+                                        cabinet.getUpdatedAt()
+                                );
+
+                                resultFuture.complete(detailVo);
+                            } else {
+                                resultFuture.completeExceptionally(
+                                        new ServiceException(ExceptionStatus.USER_NOT_FOUND)
+                                );
+                            }
+                        } else {
+                            // 대여 실패
+                            resultFuture.completeExceptionally(
+                                    new ServiceException(ExceptionStatus.CABINET_RENT_FAILED)
+                            );
+                        }
+                    } else {
+                        resultFuture.completeExceptionally(
+                                new ServiceException(ExceptionStatus.CABINET_NOT_FOUND)
+                        );
+                    }
+                } catch (Exception e) {
+                    resultFuture.completeExceptionally(
+                            new ServiceException(ExceptionStatus.CABINET_RENT_FAILED)
+                    );
+                } finally {
+                    // 리소스 정리
+                    cabinetRedisService.unregisterListener(cabinetId + ":" + studentNumber);
+                    cleanupResources(cabinetId, studentNumber);
+                }
+            }
+            scheduler.shutdown();
+        }, timeoutSeconds, TimeUnit.SECONDS);
+    }
+    /**
+     * 리소스 정리를 위한 헬퍼 메소드
+     */
+    private void cleanupResources(Long cabinetId, String studentNumber) {
+        // 임시 상태 복원
+        cabinetRedisService.setTemporaryStatus(cabinetId, CabinetStatus.AVAILABLE);
+
+        // 큐에서 제거
+        queueManager.removeFromQueue(cabinetId, studentNumber);
+
+        // 락 해제
+        queueManager.releaseProcessingLock(cabinetId);
+
+        // Redis 결과 키 삭제
+        redisTemplate.delete(CabinetRedisService.CABINET_OPERATION_RESULT_KEY + cabinetId + ":" + studentNumber);
     }
 
     @Transactional
@@ -145,8 +401,32 @@ public class CabinetService {
         Building building = cabinet.getBuildingId();
         User cabinetOwner = cabinet.getUserId();
 
-        // 2. studentNumber로 요청자 확인 (isMine 여부 판단)
-//        boolean isMine = checkIsMine(requestVo.studentNumber(), cabinetOwner);
+        // 중요: Redis에서 캐비닛 상태를 마지막에 업데이트하여 덮어쓰기 방지
+        cabinetRedisService.setTemporaryStatus(requestVo.cabinetId(), CabinetStatus.AVAILABLE);
+
+        // 다음날 13시 대여 가능 시간 설정
+        cabinetRedisService.setReleaseTime(requestVo.cabinetId());
+
+        // 중요: 먼저 처리 중인 상태나 락 정보 삭제
+        queueManager.releaseProcessingLock(requestVo.cabinetId());
+        queueManager.releaseReturnLock(requestVo.cabinetId());
+
+
+
+
+
+        // Redis에서 캐비닛 관련 모든 키 정리 (상태 키와 릴리즈 타임 키는 보존)
+        cleanRedisKeysExceptStatusAndReleaseTime(requestVo.cabinetId(), requestVo.studentNumber());
+
+        // 상태 키가 제대로 설정되었는지 확인 (즉시 검증)
+        Object updatedStatus = redisTemplate.opsForValue().get(CABINET_STATUS_KEY + requestVo.cabinetId());
+        if (updatedStatus == null || !updatedStatus.toString().equals(CabinetStatus.AVAILABLE.toString())) {
+            // 상태가 없거나 일치하지 않으면 다시 설정
+            cabinetRedisService.setTemporaryStatus(requestVo.cabinetId(), CabinetStatus.AVAILABLE);
+            // 설정 후 바로 확인
+            updatedStatus = redisTemplate.opsForValue().get(CABINET_STATUS_KEY + requestVo.cabinetId());
+            logger.info("Cabinet status reset in Redis: cabinetId={}, status={}", requestVo.cabinetId(), updatedStatus);
+        }
 
         Boolean isVisible = (cabinetOwner != null) ? cabinetOwner.getIsVisible() : true;
 
@@ -161,6 +441,58 @@ public class CabinetService {
                 false,
                 cabinet.getUpdatedAt() // 만료일
         );
+    }
+
+    /**
+     * 상태 키와 릴리즈 타임 키를 제외한 캐비닛 관련 Redis 키를 정리합니다.
+     */
+    private void cleanRedisKeysExceptStatusAndReleaseTime(Long cabinetId, String studentNumber) {
+        try {
+            // 대여 처리 키
+            String rentProcessingKey = CABINET_RENT_PROCESSING_KEY + cabinetId;
+
+            // 반납 처리 키
+            String returnProcessingKey = CABINET_RETURN_PROCESSING_KEY + cabinetId;
+
+            // 결과 키
+            String resultKey = CABINET_OPERATION_RESULT_KEY + cabinetId + ":" + studentNumber;
+
+            // Redis 키 삭제 (파이프라인 사용)
+            redisTemplate.delete(List.of(rentProcessingKey, returnProcessingKey, resultKey));
+
+            // 리스너 해제
+            cabinetRedisService.unregisterListener(cabinetId + ":" + studentNumber);
+
+            logger.info("Cleaned processing Redis keys for cabinet {} and student {}", cabinetId, studentNumber);
+        } catch (Exception e) {
+            logger.warn("Failed to clean Redis keys for cabinet {}: {}", cabinetId, e.getMessage());
+        }
+    }
+
+    /**
+     * 캐비닛 관련 Redis 키를 모두 정리합니다.
+     */
+    private void cleanRedisKeysForCabinet(Long cabinetId, String studentNumber) {
+        try {
+            // 대여 처리 키
+            String rentProcessingKey = CABINET_RENT_PROCESSING_KEY + cabinetId;
+
+            // 반납 처리 키
+            String returnProcessingKey = CABINET_RETURN_PROCESSING_KEY + cabinetId;
+
+            // 결과 키
+            String resultKey = CABINET_OPERATION_RESULT_KEY + cabinetId + ":" + studentNumber;
+
+            // Redis 키 삭제 (상태 키는 제외)
+            redisTemplate.delete(List.of(rentProcessingKey, returnProcessingKey, resultKey));
+
+            // 리스너 해제
+            cabinetRedisService.unregisterListener(cabinetId + ":" + studentNumber);
+
+            logger.info("Cleaned Redis keys for cabinet {} and student {} (status key preserved)", cabinetId, studentNumber);
+        } catch (Exception e) {
+            logger.warn("Failed to clean Redis keys for cabinet {}: {}", cabinetId, e.getMessage());
+        }
     }
 
     public List<CabinetVo> searchCabinetByKeyword(CabinetSearchVo requestVo) {
@@ -234,16 +566,6 @@ public class CabinetService {
     }
 
 
-    private boolean checkIsMine(String studentNumber, User cabinetOwner) {
-        if (studentNumber != null && cabinetOwner != null) {
-//            //TODO: 추가예정
-//            // 학번으로 사용자 찾기
-//            Optional<User> requestUser = userRepository.findByStudentNumber(requestVo.studentNumber());
-//
-//            if (requestUser.isPresent()) {
-//                return requestUser.get().getId().equals(cabinetOwner.getId());
-//            }
-        }
-        return false;
-    }
+
+
 }
