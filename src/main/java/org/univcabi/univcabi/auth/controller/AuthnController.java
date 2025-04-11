@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,10 @@ import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
 import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
 import org.univcabi.univcabi.auth.vo.AuthnLoginVo;
 import org.univcabi.univcabi.auth.vo.AuthnTokenGenerateVo;
+import org.univcabi.univcabi.exception.ControllerException;
+
+import static org.univcabi.univcabi.exception.ExceptionStatus.AUTH_INVALID_PARAMS;
+import static org.univcabi.univcabi.exception.ExceptionStatus.AUTH_SESSION_UNAUTHORIZED;
 
 @Slf4j
 @RestController
@@ -84,6 +89,9 @@ public class AuthnController {
 
         String refreshToken = jwtTokenProvider.generateRefreshToken(requestDto.getStudentNumber());
 
+        // redis에 refreshToken 저장
+        tokenService.storeRefreshToken(tokenVo.studentNumber(),refreshToken);
+
         ResponseCookie refreshCookie = tokenService.createRefreshTokenCookie(refreshToken);
         // 로그인 성공시 accessToken 발급 ( 응답의 body 값 )
         AuthnLoginResponseDto responseDto = AuthnLoginResponseDto.builder().accessToken(accessToken).build();
@@ -96,22 +104,26 @@ public class AuthnController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutByJwtToken(){
-        // User 로그아웃 로직 토큰에 있는 JWT로 로그아웃 하므로 서비스로직이 필요하지 않음
-        if(SecurityContextHolder.getContext().getAuthentication()==null) {
-            return ResponseEntity.badRequest().body("인증되지 않은 요청입니다.");
+        Authentication authn = SecurityContextHolder.getContext().getAuthentication();
+
+        // 잘못된 세션
+        if(authn==null) {
+            throw new ControllerException(AUTH_SESSION_UNAUTHORIZED);
         }
 
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = authn.getPrincipal();
 
+        // 인증 객체가 유효하지 않음
         if(!(principal instanceof UserDetails)){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 사용자입니다.");
+            throw new ControllerException(AUTH_INVALID_PARAMS);
         }
 
         UserDetails userDetails = (UserDetails) principal;
         String studentNumber = userDetails.getUsername();
 
+        //해당 사용자의 contextHolder 정보 삭제
         SecurityContextHolder.clearContext();
-
+        //해당 사용자의 redis의 refreshToken 정보 삭제
         tokenService.deleteRefreshToken(studentNumber);
 
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken","")

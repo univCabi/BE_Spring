@@ -61,7 +61,6 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-
     @Builder(toBuilder = true)
     private User(Long id, String name, String affiliation, String phoneNumber, Building building, Boolean isVisible, Authn authn, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
         this.id = id;

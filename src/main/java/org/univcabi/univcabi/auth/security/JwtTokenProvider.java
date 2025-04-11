@@ -13,6 +13,7 @@ import java.util.*;
 
 @Slf4j
 @Component
+// JWT 생성 + 파싱 + 검증 담당
 public class JwtTokenProvider {
     private final SecretKey key;
     private final long accessTokenExpiration;
@@ -27,22 +28,22 @@ public class JwtTokenProvider {
 
     }
 
+    // JWT 생성 (문자열 반환)
     private String createToken(String studentNumber, AuthnRole role, long expirationTime) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub",studentNumber);
-        claims.put("iat",now);
 
         Optional.ofNullable(role).ifPresent(r-> claims.put("role", r.name())); // ADMIN, NORMAL
 
         return Jwts.builder()
+                .subject(studentNumber)
                 .claims(claims)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
-                .compact();
+                .compact(); // Header, Payload, Signature 를 묶어서 문자열로 반환
     }
 
     public String generateAccessToken(String studentNumber, AuthnRole role) {
@@ -58,19 +59,15 @@ public class JwtTokenProvider {
             Jwts.parser()
                     .verifyWith((SecretKey) key)
                     .build()
-                    .parseSignedClaims(token);
+                    .parseSignedClaims(token); // 해쉬기반 서명 검증 + 만료 검증
             return true;
-        } catch (ExpiredJwtException e) {
-            log.warn("만료된 JWT: {}", e.getMessage());
-            throw e;
-        } catch (JwtException e) {
-            log.warn("유효하지 않은 JWT: {}", e.getMessage());
+        } catch (JwtException e){
+            log.warn("JWT 유효성 검증 실패: {}",e.getMessage());
+            return false;
         }
-        return false;
     }
 
     public String getStudentNumberFromToken(String token) {
-
         return Jwts.parser()
                 .verifyWith((SecretKey) key)
                 .build()
@@ -79,17 +76,4 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    public Date getExpirationDate(String token) {
-        return Jwts.parser()
-                .verifyWith((SecretKey) key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration();
-    }
-
-    public boolean isTokenExpired(String token){
-        Date expirationDate = getExpirationDate(token);
-        return expirationDate.before(new Date());
-    }
 }
