@@ -91,6 +91,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle AsyncException for asynchronous processing errors
+     */
+    @ExceptionHandler(AsyncException.class)
+    public ResponseEntity<CustomExceptionStatus> handleAsyncException(AsyncException ex, WebRequest request) {
+        log.error("AsyncException: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex.getStatus(), request);
+    }
+
+    /**
      * Handle MethodArgumentNotValidException (DTO 검증 실패)
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)

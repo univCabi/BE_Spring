@@ -3,23 +3,36 @@ package org.univcabi.univcabi.cabinet.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.cabinet.dto.response.*;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.dto.request.*;
+import org.univcabi.univcabi.cabinet.service.CabinetUtilService;
 import org.univcabi.univcabi.cabinet.vo.*;
+import org.univcabi.univcabi.exception.AsyncException;
+import org.univcabi.univcabi.exception.ExceptionStatus;
+import org.univcabi.univcabi.exception.RepositoryException;
+import org.univcabi.univcabi.exception.ServiceException;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
+
+import static org.univcabi.univcabi.exception.ExceptionStatus.*;
 
 @RestController
 @RequestMapping("/api/v1/cabinet")
 public class CabinetController {
     private final CabinetService cabinetService;
+    private final CabinetUtilService cabinetUtilService;
 
-    public CabinetController(CabinetService cabinetService) {
+    public CabinetController(CabinetService cabinetService, CabinetUtilService cabinetUtilService) {
         this.cabinetService = cabinetService;
+        this.cabinetUtilService = cabinetUtilService;
     }
 
     @GetMapping("/all")
@@ -39,7 +52,7 @@ public class CabinetController {
         );
 
         // 2-2. 조회 결과를 기반으로 응답 VO 생성
-        CabinetPageResponseVo<CabinetVo> responseVo = cabinetService.convertToPageResponseVo(
+        CabinetPageResponseVo<CabinetVo> responseVo = cabinetUtilService.convertToPageResponseVo(
                 cabinetVoPage,
                 requestVo,
                 request
@@ -96,28 +109,48 @@ public class CabinetController {
     }
 
     @PostMapping("/rent")
-    public ResponseEntity<CabinetDetailResponseDto> rentCabinet(@RequestBody @Valid CabinetRentRequestDto requestDto) {
-
-        //TODO: 변경필요
+    public CompletableFuture<ResponseEntity<CabinetDetailResponseDto>> rentCabinet(@RequestBody @Valid CabinetRentRequestDto requestDto) {
         String studentNumber = "202111741";
         CabinetRentVo requestVo = new CabinetRentVo(requestDto.getCabinetId(), studentNumber);
 
-        CabinetDetailVo cabinetDetailVo = cabinetService.rentCabinet(requestVo);
+        return cabinetService.rentCabinet(requestVo)
+                .thenApply(cabinetDetailVo -> {
+                    // 성공 응답 생성
+                    CabinetDetailResponseDto responseDto = CabinetDetailResponseDto.builder()
+                            .floor(cabinetDetailVo.floor())
+                            .section(cabinetDetailVo.section())
+                            .building(cabinetDetailVo.building())
+                            .cabinetNumber(cabinetDetailVo.cabinetNumber())
+                            .status(cabinetDetailVo.status())
+                            .isVisible(cabinetDetailVo.isVisible())
+                            .username(cabinetDetailVo.username())
+                            .isMine(cabinetDetailVo.isMine())
+                            .expiredAt(cabinetDetailVo.expiredAt())
+                            .build();
 
-        // VO를 DTO로 변환
-        CabinetDetailResponseDto responseDto = CabinetDetailResponseDto.builder()
-                .floor(cabinetDetailVo.floor())
-                .section(cabinetDetailVo.section())
-                .building(cabinetDetailVo.building())
-                .cabinetNumber(cabinetDetailVo.cabinetNumber())
-                .status(cabinetDetailVo.status())
-                .isVisible(cabinetDetailVo.isVisible())
-                .username(cabinetDetailVo.username())
-                .isMine(cabinetDetailVo.isMine())
-                .expiredAt(cabinetDetailVo.expiredAt())
-                .build();
+                    return ResponseEntity.ok(responseDto);
+                })
+                .exceptionally(ex -> {
+                    // 원인 예외 추출
+                    Throwable cause = ex;
+                    if (ex instanceof CompletionException && ex.getCause() != null) {
+                        cause = ex.getCause();
+                    }
 
-        return ResponseEntity.ok(responseDto);
+                    // 원인 예외에 따라 적절한 AsyncException으로 변환하여 전역 예외 핸들러에게 전달
+                    if (cause instanceof ServiceException) {
+                        ServiceException serviceEx = (ServiceException) cause;
+                        throw new AsyncException(serviceEx.getStatus());
+                    } else if (cause instanceof RepositoryException) {
+                        RepositoryException repoEx = (RepositoryException) cause;
+                        throw new AsyncException(repoEx.getStatus());
+                    } else {
+                        // 기타 예외는 일반 서버 오류로 처리
+                        throw new AsyncException(
+                                ExceptionStatus.GENERAL_INTERNAL_SERVER_ERROR
+                        );
+                    }
+                });
     }
 
     @PostMapping("/return")
@@ -180,7 +213,7 @@ public class CabinetController {
         );
 
         // 페이지 응답 VO로 변환 (제네릭 타입 명시)
-        CabinetPageResponseVo<CabinetVo> responseVo = cabinetService.convertToPageResponseVo(
+        CabinetPageResponseVo<CabinetVo> responseVo = cabinetUtilService.convertToPageResponseVo(
                 cabinetVoPage,
                 pageVo,
                 request
@@ -223,7 +256,7 @@ public class CabinetController {
                 requestDto.getPageSize()
         );
 
-        CabinetPageResponseVo<CabinetHistoryResponseVo> responseVo = cabinetService.convertToPageResponseVo(
+        CabinetPageResponseVo<CabinetHistoryResponseVo> responseVo = cabinetUtilService.convertToPageResponseVo(
                 historyVOsPage,
                 pageVo,
                 request
