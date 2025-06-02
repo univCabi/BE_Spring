@@ -49,7 +49,10 @@ public class SecurityConfig {
                                 "/authn/delete",
                                 "/authn/token/access",
                                 "/user/mockup",
-                                "/api/v1/cabinet/**")
+                                "/api/v1/cabinet/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**")
                         .permitAll() //로그인 api는 인증 없이 가능
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider,customUserDetailsService),
@@ -62,8 +65,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource(){
 
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
-        corsConfiguration.setAllowedOrigins(List.of("https://localhost:5173"));
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173","https://localhost:5173"));
         corsConfiguration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
