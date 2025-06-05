@@ -1,5 +1,7 @@
 package org.univcabi.univcabi.user.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +19,14 @@ import org.springframework.security.core.Authentication;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
+@Tag(name="회원 정보 수정")
 public class UserController {
 
     private final UserService userService;
 
-
     // User profile 에 필요한 정보 조회
     @GetMapping("/profile/me")
+    @Operation(summary = "회원 본인 프로필 조회")
     public ResponseEntity<UserProfileResponseDto> getMyProfile(Authentication authentication){
         String studentNumber = authentication.getName();
 
@@ -36,6 +39,7 @@ public class UserController {
 
     // isVisibility 속성 변경
     @PostMapping("/profile/me")
+    @Operation(summary = "회원 본인 프로필 수정")
     public ResponseEntity<Void> updateUserVisibility(@RequestBody @Valid UserVisibilityRequestDto requestDto,Authentication authentication){
         String studentNumber = authentication.getName();
 
@@ -49,6 +53,7 @@ public class UserController {
 
     // 데이터 베이스 초기화
     @PostMapping("/mockup")
+    @Operation(summary = "데이터베이스 초기화")
     public ResponseEntity<Void> resetDataBase(){
         userService.resetDatabase();
 

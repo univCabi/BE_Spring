@@ -1,5 +1,7 @@
 package org.univcabi.univcabi.auth.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ import static org.univcabi.univcabi.exception.ExceptionStatus.AUTH_SESSION_UNAUT
 @RestController
 @RequestMapping("/authn")
 @RequiredArgsConstructor
+@Tag(name="회원 로직")
 public class AuthnController {
 
     private final AuthnService authnService;
@@ -40,6 +43,7 @@ public class AuthnController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/create")
+    @Operation(summary = "회원가입")
     public ResponseEntity<AuthnCreateResponseDto> createUser(@RequestBody @Valid AuthnCreateRequestDto requestDto){
         // studentNumber, password, role 파라미터로 User 생성
         AuthnCreateVo requestVo = new AuthnCreateVo(
@@ -59,6 +63,7 @@ public class AuthnController {
     }
 
     @PostMapping("/delete")
+    @Operation(summary="회원탈퇴")
     public  ResponseEntity<AuthnDeleteResponseDto> deleteUserByStudentNumber(@RequestBody @Valid AuthnDeleteRequestDto requestDto){
         // studentNumber 로 User 삭제
         AuthnDeleteVo requestVo = new AuthnDeleteVo(
@@ -75,6 +80,7 @@ public class AuthnController {
     }
 
     @PostMapping("/login")
+    @Operation(summary="로그인")
     public ResponseEntity<AuthnLoginResponseDto> loginByStudentNumberAndPassword(@RequestBody @Valid AuthnLoginRequestDto requestDto){
         AuthnLoginVo requestVo = new AuthnLoginVo(
                 requestDto.getStudentNumber(),
@@ -103,6 +109,7 @@ public class AuthnController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary="로그아웃")
     public ResponseEntity<String> logoutByJwtToken(){
         Authentication authn = SecurityContextHolder.getContext().getAuthentication();
 
