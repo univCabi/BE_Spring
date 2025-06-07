@@ -22,8 +22,8 @@ public class CabinetPosition {
     private Cabinet cabinetId;
 
     @Column(name="cabinet_x_pos")
-    private String cabinetXPos;
+    private Integer cabinetXPos;
 
     @Column(name="cabinet_y_pos")
-    private String cabinetYPos;
+    private Integer cabinetYPos;
 }
