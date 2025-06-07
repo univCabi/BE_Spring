@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.univcabi.univcabi.cabinet.entity.BuildingName;
 
 
 @Getter
@@ -27,12 +28,8 @@ public class AdminUserCreateRequestDto {
     @NotBlank
     private String password;
 
-    @NotBlank
-    private String buildingName;
-
-    @NotNull
+    // 빌딩 정보는 nullable 이므로 null 값을 허용한다.
+    private BuildingName buildingName;
     private Integer floor;
-
-    @NotBlank
     private String section;
 }

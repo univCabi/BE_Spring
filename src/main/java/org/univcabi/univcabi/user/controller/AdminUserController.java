@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.user.dto.request.AdminUserCreateRequestDto;
 import org.univcabi.univcabi.user.service.UserService;
+import org.univcabi.univcabi.user.vo.AdminUserCreateVo;
 
 @RestController
 @RequestMapping("/user/admin")
@@ -25,6 +27,20 @@ public class AdminUserController {
     @Operation(summary = "관리자 생성")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> createAdminUser(@RequestBody @Valid AdminUserCreateRequestDto requestDto){
+
+        AdminUserCreateVo requestVo = new AdminUserCreateVo(
+                requestDto.getName(),
+                requestDto.getAffiliation(),
+                requestDto.getPhoneNumber(),
+                requestDto.getStudentNumber(),
+                requestDto.getPassword(),
+                AuthnRole.ADMIN,
+                requestDto.getBuildingName(),
+                requestDto.getFloor(),
+                requestDto.getSection()
+        );
+
+        userService.createAdminUser(requestVo);
 
         return ResponseEntity.ok().build();
     }
