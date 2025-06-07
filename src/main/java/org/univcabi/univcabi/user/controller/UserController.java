@@ -19,7 +19,7 @@ import org.springframework.security.core.Authentication;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
-@Tag(name="회원 정보 수정")
+@Tag(name="회원 정보 관리")
 public class UserController {
 
     private final UserService userService;
@@ -59,4 +59,5 @@ public class UserController {
 
         return ResponseEntity.ok().build();
     }
+
 }
