@@ -10,12 +10,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.univcabi.univcabi.auth.entity.QAuthn;
 import org.univcabi.univcabi.cabinet.entity.*;
 import org.univcabi.univcabi.exception.ExceptionStatus;
 import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.user.entity.QUser;
 import org.univcabi.univcabi.user.entity.User;
-import org.univcabi.univcabi.auth.entity.QAuthn;
 
 
 import java.time.LocalDateTime;

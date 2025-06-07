@@ -72,7 +72,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/auth/refresh",
                 "/api/public",   // 퍼블릭 API 경로 등
                 "/api/user/mockup",
-                "/authn/token/access"
+                "/authn/token/access",
+                "/swagger-ui.html",
+                "/v3/api-docs",
+                "/swagger-ui"
         );
 
         String path = request.getRequestURI();

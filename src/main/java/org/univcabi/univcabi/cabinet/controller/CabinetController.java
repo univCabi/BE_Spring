@@ -1,5 +1,7 @@
 package org.univcabi.univcabi.cabinet.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -25,7 +27,8 @@ import java.util.stream.Collectors;
 import static org.univcabi.univcabi.exception.ExceptionStatus.*;
 
 @RestController
-@RequestMapping("/api/v1/cabinet")
+@RequestMapping("/cabinet")
+@Tag(name="cabinet 로직")
 public class CabinetController {
     private final CabinetService cabinetService;
     private final CabinetUtilService cabinetUtilService;
@@ -36,6 +39,7 @@ public class CabinetController {
     }
 
     @GetMapping("/all")
+    @Operation(summary = "사물함 전체 조회")
     public ResponseEntity<CabinetFindAllInfoResponseDto> findAllCabinetInfo(
             @ModelAttribute @Valid CabinetFindAllInfoRequestDto requestDto,
             HttpServletRequest request) {
@@ -82,6 +86,7 @@ public class CabinetController {
 
     //TODO: JWT userID 사용 추가
     @GetMapping("/detail")
+    @Operation(summary = "사물함 상세 정보 조회")
     public ResponseEntity<CabinetDetailResponseDto> findOneCabinetInfo(@ModelAttribute @Valid CabinetFindOneInfoRequestDto requestDto) {
         // Builder 대신 정적 팩토리 메서드 사용
 
@@ -109,6 +114,7 @@ public class CabinetController {
     }
 
     @PostMapping("/rent")
+    @Operation(summary = "사물함 대여")
     public CompletableFuture<ResponseEntity<CabinetDetailResponseDto>> rentCabinet(@RequestBody @Valid CabinetRentRequestDto requestDto) {
         String studentNumber = "202111741";
         CabinetRentVo requestVo = new CabinetRentVo(requestDto.getCabinetId(), studentNumber);
@@ -154,6 +160,7 @@ public class CabinetController {
     }
 
     @PostMapping("/return")
+    @Operation(summary = "사물함 반납")
     public ResponseEntity<CabinetDetailResponseDto> returnCabinet(@RequestBody @Valid CabinetReturnRequestDto requestDto) {
         //TODO: 변경필요
         String studentNumber = "202111741";
@@ -177,6 +184,7 @@ public class CabinetController {
     }
 
     @GetMapping("/search")
+    @Operation(summary = "사물함 검색 결과")
     public ResponseEntity<List<CabinetSearchResponseDto>> searchCabinetByKeyword(@ModelAttribute @Valid CabinetSearchRequestDto requestDto) {
         CabinetSearchVo requestVo = new CabinetSearchVo(requestDto.getKeyword());
 
@@ -195,6 +203,7 @@ public class CabinetController {
     }
 
     @GetMapping("/search/detail")
+    @Operation(summary = "사물함 구체적인 검색 결과")
     public ResponseEntity<CabinetFindAllInfoResponseDto> searchCabinetDetailByKeyword(@ModelAttribute @Valid CabinetSearchDetailRequestDto requestDto,
                                                           HttpServletRequest request) {
         // DTO를 VO로 변환 (빌더 패턴 사용 가능하면 좋을 것)
@@ -240,6 +249,7 @@ public class CabinetController {
     }
 
     @GetMapping("/history")
+    @Operation(summary = "사물함 이력 조회")
     public ResponseEntity<List<CabinetHistoryResponseDto>> findCabinetHistory(@ModelAttribute @Valid CabinetHistoryRequestDto requestDto,
                                                 HttpServletRequest request) {
         CabinetHistoryVo requestVo = new CabinetHistoryVo(

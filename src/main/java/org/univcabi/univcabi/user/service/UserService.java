@@ -5,11 +5,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.univcabi.univcabi.auth.entity.Authn;
+import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
+import org.univcabi.univcabi.cabinet.repository.BuildingRepository;
 import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
 import org.univcabi.univcabi.user.repository.UserRepository;
+import org.univcabi.univcabi.user.vo.AdminUserCreateVo;
 import org.univcabi.univcabi.user.vo.RentCabinetInfoVo;
 import org.univcabi.univcabi.user.vo.UserProfileVo;
 import org.univcabi.univcabi.user.vo.UserVisibilityVo;
@@ -32,6 +36,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final EntityManager entityManager;
     private final ResourceLoader resourceLoader;
+    private final BuildingRepository buildingRepository;
+    private final AuthnRepository authnRepository;
 
     public UserProfileVo getUserProfileByStudentNumber(String studentNumber) {
         // 유저 정보 가져오기
@@ -113,5 +119,48 @@ public class UserService {
         catch (IOException e) {
             throw new ServiceException(SQL_FILE_LOAD_FAILED);
         }
+    }
+
+    // ADMIN 유저 생성 서비스 로직
+    @Transactional
+    public void createAdminUser(AdminUserCreateVo requestVo){
+        Building building = null;
+
+        // building 관련 값이 모두 있을 때 -> 조회
+        boolean havingAllValue = requestVo.buildingName() !=null
+                && requestVo.floor()!=null
+                && requestVo.section()!=null;
+
+        // building 관련 값이 일부만 있을 때 -> 잘못된 요청 예외처리
+        boolean havingAnyValue = requestVo.buildingName() !=null
+                || requestVo.floor()!=null
+                || requestVo.section()!=null;
+
+        if(havingAllValue){
+            building = buildingRepository.findBuildingByNameAndFloorAndSection(
+                    requestVo.buildingName(), requestVo.floor(), requestVo.section()
+            ).orElseThrow(() -> new ServiceException(BUILDING_NOT_FOUND));
+        } else if (havingAnyValue){
+            throw new ServiceException(INVALID_BUILDING_INFO);
+        }
+
+        User user = User.builder()
+                .name(requestVo.name())
+                .affiliation(requestVo.affiliation())
+                .phoneNumber(requestVo.phoneNumber())
+                .building(building)
+                .isVisible(true)
+                .build();
+
+        userRepository.save(user);
+
+        Authn authn = Authn.builder()
+                .studentNumber(requestVo.studentNumber())
+                .password(requestVo.password())
+                .role(requestVo.role())
+                .user(user)
+                .build();
+
+        authnRepository.save(authn);
     }
 }

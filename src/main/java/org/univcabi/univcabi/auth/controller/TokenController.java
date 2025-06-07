@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.auth.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class TokenController {
 
     // RefreshToken 관련 예외 책임은 전부 여기로
     @PostMapping("/authn/token/access")
+    @Tag(name="AccessToken 재발급")
     public ResponseEntity<AuthnLoginResponseDto> refreshAccessToken(@CookieValue(value = "refreshToken")String refreshToken,
                                                                     HttpServletResponse response) throws IOException {
 

@@ -39,7 +39,7 @@ public class User {
     private String phoneNumber;
 
     @ManyToOne
-    @JoinColumn(name = "building_id", nullable = false)
+    @JoinColumn(name = "building_id", nullable = true)
     private Building building;  // 이것만 유지하고 다른 building 관련 필드는 제거
 
     @NotNull
