@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.cabinet.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.univcabi.univcabi.cabinet.entity.BuildingName;
 import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
@@ -20,7 +21,10 @@ public class CabinetByStatusResponseDto {
     private CabinetStatus status;
     private CabinetUserDto cabinetUserDto;
     private String reason;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.M.d")
     private LocalDate rentalStartDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.M.d")
     private LocalDate overDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.M.d")
     private LocalDate brokenDate;
 }
