@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.exception.ServiceException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
@@ -315,6 +318,23 @@ public class CabinetController {
             @ModelAttribute CabinetSearchByStatusRequestDto requestDto,
             HttpServletRequest request
     ){
+        // Pageable 생성
+        Pageable pageable = PageRequest.of(
+                Optional.ofNullable(requestDto.getPage()).orElse(0),
+                Optional.ofNullable(requestDto.getPageSize()).orElse(12)
+        );
 
+        CabinetStatusVo statusVo = new CabinetStatusVo(requestDto.getStatus());
+
+        Page<CabinetByStatusVo> page = cabinetService.findCabinetsByStatus(statusVo,pageable);
+
+        List<CabinetByStatusResponseDto> cabinetByStatusResponseDtoList = page.getContent().stream()
+                .map(vo ->CabinetByStatusResponseDto.builder()
+                        .id(vo.id())
+                        .building(vo.building())
+                        .floor(vo.floor())
+                        .se
+                        .build()
+                ).toList();
     }
 }

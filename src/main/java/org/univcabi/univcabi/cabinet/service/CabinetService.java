@@ -16,6 +16,7 @@ import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.cabinet.dto.CabinetKafkaDto;
 import org.univcabi.univcabi.cabinet.entity.*;
+import org.univcabi.univcabi.cabinet.repository.CabinetHistoryRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
 import org.univcabi.univcabi.cabinet.vo.*;
@@ -27,6 +28,7 @@ import org.univcabi.univcabi.configs.AsyncConfig;
 
 import javax.inject.Qualifier;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -41,6 +43,7 @@ public class CabinetService {
 
     private final CabinetRepository cabinetRepository;
     private final CabinetPositionRepository cabinetPositionRepository;
+    private final CabinetHistoryRepository cabinetHistoryRepository;
     private final UserRepository userRepository;
     private final AuthnRepository authnRepository;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -67,6 +70,7 @@ public class CabinetService {
             CabinetRepository cabinetRepository,
             UserRepository userRepository,
             CabinetPositionRepository cabinetPositionRepository,
+            CabinetHistoryRepository cabinetHistoryRepository,
             AuthnRepository authnRepository,
             RedisTemplate<String, Object> redisTemplate,
             CabinetKafkaProducerService kafkaProducerService,
@@ -77,6 +81,7 @@ public class CabinetService {
         this.cabinetRepository = cabinetRepository;
         this.userRepository = userRepository;
         this.cabinetPositionRepository = cabinetPositionRepository;
+        this.cabinetHistoryRepository = cabinetHistoryRepository;
         this.authnRepository = authnRepository;
         this.redisTemplate = redisTemplate;
         this.kafkaProducerService = kafkaProducerService;
@@ -609,6 +614,67 @@ public class CabinetService {
     }
 
 
+    // 사물함 상태를 page 객체에 담아 반환
+    public Page<CabinetByStatusVo> findCabinetsByStatus(CabinetStatusVo statusVo, Pageable pageable){
+
+        Page<Cabinet> page = cabinetRepository.findCabinetByStatus(statusVo.status(),pageable);
+
+        return page.map(cabinet -> {
+            CabinetPosition position = cabinetPositionRepository.findByCabinetId(cabinet)
+                    .orElseThrow(() -> new ServiceException(POSITION_NOT_FOUND));
+
+
+            User user = cabinet.getUserId();
+
+            // 기본값 null 로 초기화
+            String reason =null;
+            LocalDate rentalStartDate = null;
+            LocalDate overDate = null;
+            LocalDate brokenDate = null;
+
+            Optional<CabinetHistory> cabinetHistory =
+                cabinetHistoryRepository.findRecentCabinetByCabinetId(cabinet.getId());
+
+            if(cabinetHistory.isPresent()){
+                CabinetHistory history = cabinetHistory.get();
+
+                // 상태가 AVAILABLE 이 아닌 경우 해당 STATUS 반환 향후 수정
+                if(cabinet.getStatus() != CabinetStatus.AVAILABLE){
+                    reason = cabinet.getStatus().name();
+                }
+
+                // 상태가 USING 일때 rental 시작일
+                if(cabinet.getStatus() == CabinetStatus.USING){
+                    rentalStartDate = history.getCreatedAt().toLocalDate();
+                }
+
+                // 만료일
+                overDate = history.getExpiredAt().toLocalDate();
+
+                // 업데이트 날짜를 기준으로 Broken 상태일 경우 고장일 설정
+                if (cabinet.getStatus() == CabinetStatus.BROKEN){
+                    brokenDate = history.getUpdatedAt().toLocalDate();
+                }
+
+            }
+
+            return new CabinetByStatusVo(
+                    cabinet.getId(),
+                    cabinet.getBuildingId().getName(),
+                    cabinet.getBuildingId().getFloor(),
+                    position,
+                    cabinet.getCabinetNumber(),
+                    cabinet.getStatus(),
+                    user,
+                    reason,
+                    rentalStartDate,
+                    overDate,
+                    brokenDate
+            );
+
+        });
+
+    }
 
 
 }

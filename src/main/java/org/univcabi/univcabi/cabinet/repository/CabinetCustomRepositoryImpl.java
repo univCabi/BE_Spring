@@ -340,4 +340,28 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
             throw new RepositoryException(ExceptionStatus.CABINET_HISTORY_SEARCH_FAILED);
         }
     }
+
+    @Override
+    public Page<Cabinet> findCabinetByStatus(CabinetStatus status, Pageable pageable){
+        QCabinet cabinet = QCabinet.cabinet;
+        QBuilding building = QBuilding.building;
+        QUser user = QUser.user;
+
+        List<Cabinet> cabinetList = queryFactory
+                .selectFrom(cabinet)
+                .leftJoin(cabinet.buildingId,building).fetchJoin()
+                .leftJoin(cabinet.userId,user).fetchJoin()
+                .where(cabinet.status.eq(status))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long count = queryFactory
+                .selectFrom(cabinet)
+                .where(cabinet.status.eq(status))
+                .fetchCount();
+
+        return new PageImpl<>(cabinetList,pageable,count);
+    };
+
 }
