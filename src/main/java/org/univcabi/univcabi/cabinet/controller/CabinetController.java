@@ -308,4 +308,13 @@ public class CabinetController {
 
         return ResponseEntity.ok(responseDto);
     }
+
+    @GetMapping("/status/search")
+    @Operation(summary = "사물함 상태별 조회")
+    public ResponseEntity<?> findCabinetsByStatus(
+            @ModelAttribute CabinetSearchByStatusRequestDto requestDto,
+            HttpServletRequest request
+    ){
+
+    }
 }
