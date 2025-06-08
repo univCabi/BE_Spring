@@ -109,6 +109,11 @@ public class CabinetService {
         ));
     }
 
+    public List<CabinetDataVo> findCabinetsByBuildingAndFloor(CabinetLocationVo requestVo){
+
+
+    }
+
     public CabinetDetailVo findOneCabinetInfo(CabinetFindOneVo requestVo) {
         // 1. 캐비닛 조회
         Optional<Cabinet> cabinetOptional = cabinetRepository.findOneCabinetInfoByCabinetId(requestVo.cabinetId());

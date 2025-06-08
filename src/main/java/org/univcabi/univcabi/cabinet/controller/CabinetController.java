@@ -5,11 +5,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.cabinet.dto.response.*;
+import org.univcabi.univcabi.cabinet.entity.QBuilding;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.dto.request.*;
 import org.univcabi.univcabi.cabinet.service.CabinetUtilService;
@@ -36,6 +35,24 @@ public class CabinetController {
     public CabinetController(CabinetService cabinetService, CabinetUtilService cabinetUtilService) {
         this.cabinetService = cabinetService;
         this.cabinetUtilService = cabinetUtilService;
+    }
+
+    @GetMapping
+    @Operation(summary = "빌딩 과 층에 해당하는 사물함들 정보 조회")
+    public ResponseEntity<List<CabinetDataResponseDto>> findCabinetsByBuildingAndFloor(
+            @ModelAttribute @Valid CabinetLocationRequestDto requestDto
+            ){
+        CabinetLocationVo requestVo = new CabinetLocationVo(
+                requestDto.getBuilding(),
+                requestDto.getFloors());
+
+        List<CabinetDataVo> cabinetDataVoList = cabinetService.findCabinetsByBuildingAndFloor(requestVo);
+
+        List<CabinetDataResponseDto> cabinetDataResponseDtoList = cabinetDataVoList.stream()
+                .map(CabinetDataResponseDto::of)
+                .toList();
+
+        return ResponseEntity.ok(cabinetDataResponseDtoList);
     }
 
     @GetMapping("/all")

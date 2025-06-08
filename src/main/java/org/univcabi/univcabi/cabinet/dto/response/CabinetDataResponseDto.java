@@ -17,9 +17,9 @@ public class CabinetDataResponseDto {
 
     private String isVisible;
     private String username;
-    private String isMine;
-    private String isRentAvailable;
-    private String isFree;
+    private Boolean isMine;
+    private Boolean isRentAvailable;
+    private Boolean isFree;
 
     public static CabinetDataResponseDto of(CabinetDataVo vo) {
         return CabinetDataResponseDto.builder()
@@ -30,9 +30,9 @@ public class CabinetDataResponseDto {
                 .status(vo.status())
                 .isVisible(String.valueOf(vo.isVisible()))
                 .username(vo.username())
-                .isMine(String.valueOf(vo.isMine()))
-                .isRentAvailable(String.valueOf(vo.isRentAvailable()))
-                .isFree(String.valueOf(vo.isFree()))
+                .isMine(vo.isMine())
+                .isRentAvailable(vo.isRentAvailable())
+                .isFree(vo.isFree())
                 .build();
     }
 }
