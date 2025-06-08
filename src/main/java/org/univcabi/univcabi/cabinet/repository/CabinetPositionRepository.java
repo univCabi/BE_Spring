@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface CabinetPositionRepository extends JpaRepository<CabinetPosition, Long> {
 
-    CabinetPosition findByCabinetId(Cabinet cabinet);
+    Optional<CabinetPosition> findByCabinetId(Cabinet cabinet);
 }

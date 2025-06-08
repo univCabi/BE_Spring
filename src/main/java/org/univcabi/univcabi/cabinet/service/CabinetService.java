@@ -33,6 +33,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static org.univcabi.univcabi.exception.ExceptionStatus.POSITION_NOT_FOUND;
+
 @Service
 public class CabinetService {
     private static final Logger logger = LoggerFactory.getLogger(CabinetService.class);
@@ -116,10 +118,21 @@ public class CabinetService {
         return cabinetList.stream()
                 .map(cabinet -> {
 
-                    CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet);
+                    CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet)
+                            .orElseThrow(()-> new ServiceException(POSITION_NOT_FOUND));
 
-                    User user =cabinet.getUserId();
-                    boolean isMine = Objects.equals(user.getAuthn().getStudentNumber(), requestVo.studentNumber());
+                    User user = cabinet.getUserId();
+                    boolean isMine = false;
+                    boolean isVisible = false;
+                    String username = null;
+
+                    if(user!=null)
+                    {
+                        isMine = Objects.equals(user.getAuthn().getStudentNumber(), requestVo.studentNumber());
+                        isVisible = user.getIsVisible();
+                        username= user.getName();
+                    }
+
                     boolean isRentAvailable = cabinet.getStatus() == CabinetStatus.AVAILABLE;
                     boolean isFree = true;
 
@@ -129,8 +142,8 @@ public class CabinetService {
                             cabinetPosition.getCabinetXPos(),
                             cabinetPosition.getCabinetYPos(),
                             cabinet.getStatus(),
-                            user.getIsVisible(),
-                            user.getName(),
+                            isVisible,
+                            username,
                             isMine,
                             isRentAvailable,
                             isFree

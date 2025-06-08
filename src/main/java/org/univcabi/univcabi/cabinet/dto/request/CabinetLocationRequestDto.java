@@ -1,14 +1,18 @@
 package org.univcabi.univcabi.cabinet.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
-@Getter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CabinetLocationRequestDto {
 
     @NotBlank
     private String building;
 
-    @NotBlank
+    @NotNull
     private Integer floors;
 }

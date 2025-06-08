@@ -54,7 +54,10 @@ public enum ExceptionStatus {
     GENERAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "서버가 작동하지 않고 있습니다."),
     GENERAL_GATEWAY_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "서버에서 타임아웃이 발생했습니다"),
 
-    // Building
+    // CABINET POSITION
+    POSITION_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 사물함 위치를 찾을 수 없습니다."),
+
+    // BUILDING
     BUILDING_NOT_FOUND(HttpStatus.BAD_REQUEST,"해당 건물 정보를 조회할 수 없습니다."),
     INVALID_BUILDING_INFO(HttpStatus.BAD_REQUEST,"잘못된 건물 조회 정보입니다.");
 
