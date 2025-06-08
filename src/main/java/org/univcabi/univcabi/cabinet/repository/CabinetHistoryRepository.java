@@ -11,6 +11,6 @@ public interface CabinetHistoryRepository extends JpaRepository<CabinetHistory, 
     List<CabinetHistory> findByCabinetId(Long cabinetId);
 
     // 가장 최근 사물함 내역 조회
-    @Query("SELECT ch FROM CabinetHistory ch WHERE ch.cabinet.id = :cabinetId ORDER BY ch.startedAt DESC")
-    Optional<CabinetHistory> findRecentCabinetByCabinetId(Long cabinetId);
+    @Query("SELECT ch FROM CabinetHistory ch WHERE ch.cabinet.id = :cabinetId ORDER BY ch.createdAt DESC")
+    Optional<CabinetHistory> findTop1ByCabinetIdOrderByCreatedAtDesc(Long cabinetId);
 }

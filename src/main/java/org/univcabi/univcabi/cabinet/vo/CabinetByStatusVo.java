@@ -12,6 +12,7 @@ public record CabinetByStatusVo(
         Long id,
         BuildingName building,
         Integer floor,
+        String section,
         CabinetPosition position,
         String cabinetNumber,
         CabinetStatus status,

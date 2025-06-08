@@ -633,7 +633,7 @@ public class CabinetService {
             LocalDate brokenDate = null;
 
             Optional<CabinetHistory> cabinetHistory =
-                cabinetHistoryRepository.findRecentCabinetByCabinetId(cabinet.getId());
+                cabinetHistoryRepository.findTop1ByCabinetIdOrderByCreatedAtDesc(cabinet.getId());
 
             if(cabinetHistory.isPresent()){
                 CabinetHistory history = cabinetHistory.get();
@@ -662,6 +662,7 @@ public class CabinetService {
                     cabinet.getId(),
                     cabinet.getBuildingId().getName(),
                     cabinet.getBuildingId().getFloor(),
+                    cabinet.getBuildingId().getSection(),
                     position,
                     cabinet.getCabinetNumber(),
                     cabinet.getStatus(),
