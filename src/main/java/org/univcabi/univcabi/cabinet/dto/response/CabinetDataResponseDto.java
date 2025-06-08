@@ -10,7 +10,7 @@ import org.univcabi.univcabi.cabinet.vo.CabinetDataVo;
 public class CabinetDataResponseDto {
 
     private Long id;
-    private Integer cabinetNumber;
+    private String cabinetNumber;
     private Integer cabinetXPos;
     private Integer cabinetYPos;
     private CabinetStatus status;

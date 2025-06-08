@@ -1,8 +1,11 @@
 package org.univcabi.univcabi.cabinet.vo;
 
+import org.univcabi.univcabi.cabinet.entity.BuildingName;
+
 public record CabinetLocationVo(
-        String building,
-        Integer floors
+        BuildingName building,
+        Integer floors,
+        String studentNumber
 ) {
 
 }

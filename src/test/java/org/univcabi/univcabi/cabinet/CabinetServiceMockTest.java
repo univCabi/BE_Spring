@@ -19,6 +19,7 @@ import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.BuildingName;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
+import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
 import org.univcabi.univcabi.cabinet.service.*;
 import org.univcabi.univcabi.cabinet.vo.CabinetDetailVo;
@@ -50,6 +51,9 @@ public class CabinetServiceMockTest {
 
     @Mock
     private AuthnRepository authnRepository;
+
+    @Mock
+    private CabinetPositionRepository cabinetPositionRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -94,6 +98,7 @@ public class CabinetServiceMockTest {
         cabinetService = new CabinetService(
                 cabinetRepository,
                 userRepository,
+                cabinetPositionRepository,
                 authnRepository,
                 redisTemplate,
                 kafkaProducerService,

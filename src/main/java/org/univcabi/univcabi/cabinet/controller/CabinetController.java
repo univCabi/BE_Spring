@@ -6,8 +6,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.cabinet.dto.response.*;
+import org.univcabi.univcabi.cabinet.entity.BuildingName;
 import org.univcabi.univcabi.cabinet.entity.QBuilding;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.dto.request.*;
@@ -40,11 +42,14 @@ public class CabinetController {
     @GetMapping
     @Operation(summary = "빌딩 과 층에 해당하는 사물함들 정보 조회")
     public ResponseEntity<List<CabinetDataResponseDto>> findCabinetsByBuildingAndFloor(
-            @ModelAttribute @Valid CabinetLocationRequestDto requestDto
+            @ModelAttribute @Valid CabinetLocationRequestDto requestDto,
+            Authentication authentication
             ){
+
         CabinetLocationVo requestVo = new CabinetLocationVo(
-                requestDto.getBuilding(),
-                requestDto.getFloors());
+                BuildingName.valueOf(requestDto.getBuilding()),
+                requestDto.getFloors(),
+                authentication.getName());
 
         List<CabinetDataVo> cabinetDataVoList = cabinetService.findCabinetsByBuildingAndFloor(requestVo);
 

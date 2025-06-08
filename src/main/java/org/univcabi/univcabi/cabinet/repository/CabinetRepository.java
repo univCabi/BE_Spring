@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 
+import java.util.List;
+
 public interface CabinetRepository extends JpaRepository<Cabinet, Long>, CabinetCustomRepository {
 
     // 페이징된 결과

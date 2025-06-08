@@ -4,7 +4,7 @@ import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
 
 public record CabinetDataVo(
         Long id,
-        Integer cabinetNumber,
+        String cabinetNumber,
         Integer cabinetXPos,
         Integer cabinetYPos,
         CabinetStatus status,

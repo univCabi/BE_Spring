@@ -15,10 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.cabinet.dto.CabinetKafkaDto;
-import org.univcabi.univcabi.cabinet.entity.Building;
-import org.univcabi.univcabi.cabinet.entity.Cabinet;
-import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
-import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
+import org.univcabi.univcabi.cabinet.entity.*;
+import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
 import org.univcabi.univcabi.cabinet.vo.*;
 import org.univcabi.univcabi.exception.ExceptionStatus;
@@ -30,10 +28,7 @@ import org.univcabi.univcabi.configs.AsyncConfig;
 import javax.inject.Qualifier;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -43,6 +38,7 @@ public class CabinetService {
     private static final Logger logger = LoggerFactory.getLogger(CabinetService.class);
 
     private final CabinetRepository cabinetRepository;
+    private final CabinetPositionRepository cabinetPositionRepository;
     private final UserRepository userRepository;
     private final AuthnRepository authnRepository;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -68,6 +64,7 @@ public class CabinetService {
     public CabinetService(
             CabinetRepository cabinetRepository,
             UserRepository userRepository,
+            CabinetPositionRepository cabinetPositionRepository,
             AuthnRepository authnRepository,
             RedisTemplate<String, Object> redisTemplate,
             CabinetKafkaProducerService kafkaProducerService,
@@ -77,6 +74,7 @@ public class CabinetService {
             Executor cabinetTaskExecutor, CabinetFallbackService cabinetFallbackService) {
         this.cabinetRepository = cabinetRepository;
         this.userRepository = userRepository;
+        this.cabinetPositionRepository = cabinetPositionRepository;
         this.authnRepository = authnRepository;
         this.redisTemplate = redisTemplate;
         this.kafkaProducerService = kafkaProducerService;
@@ -110,7 +108,34 @@ public class CabinetService {
     }
 
     public List<CabinetDataVo> findCabinetsByBuildingAndFloor(CabinetLocationVo requestVo){
+        List<Cabinet> cabinetList  =  cabinetRepository.findCabinetByBuildingAndFloor(
+                requestVo.building(),
+                requestVo.floors()
+        );
 
+        return cabinetList.stream()
+                .map(cabinet -> {
+
+                    CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet);
+
+                    User user =cabinet.getUserId();
+                    boolean isMine = Objects.equals(user.getAuthn().getStudentNumber(), requestVo.studentNumber());
+                    boolean isRentAvailable = cabinet.getStatus() == CabinetStatus.AVAILABLE;
+                    boolean isFree = true;
+
+                    return new CabinetDataVo(
+                            cabinet.getId(),
+                            cabinet.getCabinetNumber(),
+                            cabinetPosition.getCabinetXPos(),
+                            cabinetPosition.getCabinetYPos(),
+                            cabinet.getStatus(),
+                            user.getIsVisible(),
+                            user.getName(),
+                            isMine,
+                            isRentAvailable,
+                            isFree
+                    );
+                }).toList();
 
     }
 

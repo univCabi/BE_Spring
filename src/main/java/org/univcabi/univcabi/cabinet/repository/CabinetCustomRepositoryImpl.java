@@ -16,7 +16,7 @@ import org.univcabi.univcabi.exception.ExceptionStatus;
 import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.user.entity.QUser;
 import org.univcabi.univcabi.user.entity.User;
-
+import org.univcabi.univcabi.cabinet.entity.QCabinetPosition;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -60,6 +60,20 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
         }
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<Cabinet> findCabinetByBuildingAndFloor(BuildingName buildingName, int floors) {
+        QCabinet cabinet = QCabinet.cabinet;
+        QBuilding building = QBuilding.building;
+
+        return queryFactory
+                .selectFrom(cabinet)
+                .leftJoin(building).on(cabinet.buildingId.id.eq(building.id)).fetchJoin()
+                .where(
+                        building.name.eq(buildingName),
+                        building.floor.eq(floors)
+                ).fetch();
     }
 
     @Override
