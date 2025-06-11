@@ -16,6 +16,7 @@ import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.cabinet.dto.CabinetKafkaDto;
 import org.univcabi.univcabi.cabinet.entity.*;
+import org.univcabi.univcabi.cabinet.repository.BuildingRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetHistoryRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
@@ -44,14 +45,13 @@ public class CabinetService {
     private final CabinetRepository cabinetRepository;
     private final CabinetPositionRepository cabinetPositionRepository;
     private final CabinetHistoryRepository cabinetHistoryRepository;
+    private final BuildingRepository buildingRepository;
     private final UserRepository userRepository;
     private final AuthnRepository authnRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CabinetKafkaProducerService kafkaProducerService;
     private final ReservationQueueManager queueManager;
-
     private final CabinetUtilService cabinetUtilService;
-
     private final CabinetRedisService cabinetRedisService;
 
     private final Executor cabinetTaskExecutor;
@@ -71,6 +71,7 @@ public class CabinetService {
             UserRepository userRepository,
             CabinetPositionRepository cabinetPositionRepository,
             CabinetHistoryRepository cabinetHistoryRepository,
+            BuildingRepository buildingRepository,
             AuthnRepository authnRepository,
             RedisTemplate<String, Object> redisTemplate,
             CabinetKafkaProducerService kafkaProducerService,
@@ -82,6 +83,7 @@ public class CabinetService {
         this.userRepository = userRepository;
         this.cabinetPositionRepository = cabinetPositionRepository;
         this.cabinetHistoryRepository = cabinetHistoryRepository;
+        this.buildingRepository =buildingRepository;
         this.authnRepository = authnRepository;
         this.redisTemplate = redisTemplate;
         this.kafkaProducerService = kafkaProducerService;
@@ -675,6 +677,33 @@ public class CabinetService {
 
         });
 
+    }
+
+    // 빌딩에 따라 사물함 상태에 따른 사물함 개수를 반환
+    public List<CabinetStatusCountVo> getCabinetStatusCountsGroupByBuilding(){
+        List<Building> buildings = buildingRepository.findAll();
+
+        List<CabinetStatusCountVo>  voList = buildings.stream()
+                .map(building -> {
+                    List<Cabinet> cabinets = cabinetRepository.findByBuildingId(building);
+
+                    long total = (long) cabinets.size();
+                    long using = cabinets.stream().filter(c-> c.getStatus()==CabinetStatus.USING).count();
+                    long overdue = cabinets.stream().filter(c-> c.getStatus()==CabinetStatus.OVERDUE).count();
+                    long broken = cabinets.stream().filter(c->c.getStatus()==CabinetStatus.BROKEN).count();
+                    long available = cabinets.stream().filter(c-> c.getStatus()==CabinetStatus.AVAILABLE).count();
+
+                    return new CabinetStatusCountVo(
+                            building.getName(),
+                            total,
+                            using,
+                            overdue,
+                            broken,
+                            available
+                    );
+                }).toList();
+
+        return voList;
     }
 
 
