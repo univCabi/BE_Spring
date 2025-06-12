@@ -68,4 +68,8 @@ public class Cabinet {
         this.deletedAt = deletedAt;
     }
 
+    // 영속성 객체인 Cabinet 의 상태를 AVAILABLE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToAVAILVABLE(){
+        this.status = CabinetStatus.AVAILABLE;
+    }
 }

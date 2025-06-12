@@ -30,4 +30,5 @@ public interface CabinetRepository extends JpaRepository<Cabinet, Long>, Cabinet
     Page<Cabinet> findAllCabinetInfoByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     List<Cabinet> findByBuildingId(Building buildingId);
+
 }

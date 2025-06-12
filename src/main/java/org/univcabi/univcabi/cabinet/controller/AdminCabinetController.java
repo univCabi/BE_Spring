@@ -3,16 +3,19 @@ package org.univcabi.univcabi.cabinet.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.univcabi.univcabi.cabinet.dto.request.CabinetReturnListRequestDto;
+import org.univcabi.univcabi.cabinet.dto.response.CabinetReturnDataResponseDto;
+import org.univcabi.univcabi.cabinet.dto.response.CabinetReturnResultResponseDto;
 import org.univcabi.univcabi.cabinet.dto.response.CabinetStatusCountResponseDto;
-import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
+import org.univcabi.univcabi.cabinet.vo.CabinetReturnCabinetIdsVo;
+import org.univcabi.univcabi.cabinet.vo.CabinetReturnDataVo;
+import org.univcabi.univcabi.cabinet.vo.CabinetReturnResultVo;
 
 import java.util.List;
 
@@ -38,5 +41,27 @@ public class AdminCabinetController {
 
     @PostMapping("/return")
     @Operation(summary = "반납할 사물함 id를 보내고 해당 사물함의 상태 값을 반환")
-    public ResponseEntity<?>
+    public ResponseEntity<CabinetReturnResultResponseDto> returnCabinetsByCabinetIds(@RequestBody @Valid CabinetReturnListRequestDto requestDto){
+        CabinetReturnResultVo returnResultVo = cabinetService.returnCabinetsByCabinetIds(
+                new CabinetReturnCabinetIdsVo(requestDto.getCabinetIds()));
+
+        List<CabinetReturnDataResponseDto> returnDataResponseDtoList = returnResultVo.listVos().stream()
+                .map(vo -> CabinetReturnDataResponseDto.builder()
+                        .id(vo.id())
+                        .buildingName(vo.buildingName())
+                        .cabinetNumber(vo.cabinetNumber())
+                        .status(vo.status())
+                        .name(vo.name())
+                        .build()
+                ).toList();
+
+        return ResponseEntity.ok(
+            CabinetReturnResultResponseDto.builder()
+                    .dtoList(returnDataResponseDtoList)
+                    .message(returnResultVo.message())
+                    .errors(returnResultVo.errors())
+                    .build()
+        );
+
+    }
 }
