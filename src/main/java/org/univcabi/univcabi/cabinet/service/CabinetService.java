@@ -701,7 +701,7 @@ public class CabinetService {
         return voList;
     }
 
-    // 캐비넷 Id 값들을 보고 해당 상태값이 USING || OVERDUE 인경우 AVAILABLE로 변환하는 메서드
+    // 사물함 Id 값들을 보고 해당 상태값이 USING || OVERDUE 인경우 AVAILABLE로 변환하는 메서드
     @Transactional
     public CabinetReturnResultVo returnCabinetsByCabinetIds(CabinetReturnCabinetIdsVo requestVo){
         List<Cabinet> cabinetList = cabinetRepository.findAllById(requestVo.cabinetIds());
@@ -730,6 +730,55 @@ public class CabinetService {
         cabinetRepository.saveAll(cabinetList);
 
         return new CabinetReturnResultVo(returnDataVoList,message,errors);
+    }
+
+    // 요청들어온 사물함들의 상태 값을 변경하고 해당 사물함 정보를 반환
+    @Transactional
+    public CabinetAdminChangeStatusResultVo changeCabinetStatusByCabinetIdsAndNewStatus(CabinetAdminChangeStatusVo requestVo)
+    {
+        List<Cabinet> cabinetList = cabinetRepository.findAllById(requestVo.cabinetIds());
+        CabinetStatus status = requestVo.newStatus();
+
+        List<CabinetStatusInfoVo> infoVoList = new ArrayList<>();
+
+
+        User user = null;
+
+        if(status == CabinetStatus.OVERDUE || status == CabinetStatus.USING)
+        {
+            Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber()).orElseThrow(IllegalArgumentException::new);
+            user = authn.getUser();
+        }
+        for(Cabinet cabinet: cabinetList){
+            LocalDate brokenDate = null;
+            String reason = null;
+
+            // 분기 별로 사물함 상태 변경
+            switch (status){
+                case AVAILABLE -> cabinet.replaceStatusToAVAILVABLE();
+                case USING -> cabinet.replaceStatusToUSING();
+                case OVERDUE -> cabinet.replaceStatusToOVERDUE();
+                case BROKEN -> {
+                    brokenDate = LocalDate.now();
+                    reason= requestVo.reason();
+                    cabinet.replaceStatusToBROKEN();
+                }
+            }
+
+            infoVoList.add(new CabinetStatusInfoVo(
+                    cabinet.getId(),
+                    cabinet.getBuildingId().getName(),
+                    cabinet.getBuildingId().getFloor(),
+                    cabinet.getCabinetNumber(),
+                    status,
+                    reason,
+                    brokenDate,
+                    user != null? user.getName() : null
+            ));
+        }
+
+        return new CabinetAdminChangeStatusResultVo(infoVoList,
+                "모든 사물함 상태 변경이 완료되었습니다. ( 처리된 개수:"+infoVoList.size()+"개 )");
     }
 
 }

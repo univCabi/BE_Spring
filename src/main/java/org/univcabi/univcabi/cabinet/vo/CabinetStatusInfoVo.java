@@ -9,8 +9,8 @@ import java.time.LocalDate;
 public record CabinetStatusInfoVo(
         Long id,
         BuildingName buildingName,
-        Long floor,
-        Long cabinetNumber,
+        Integer floor,
+        String cabinetNumber,
         CabinetStatus status,
         String reason,
         LocalDate brokenDate,

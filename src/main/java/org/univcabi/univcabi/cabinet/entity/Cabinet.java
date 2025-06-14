@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.univcabi.univcabi.user.entity.User;
 
 
@@ -71,5 +72,20 @@ public class Cabinet {
     // 영속성 객체인 Cabinet 의 상태를 AVAILABLE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
     public void replaceStatusToAVAILVABLE(){
         this.status = CabinetStatus.AVAILABLE;
+    }
+
+    // 영속성 객체인 Cabinet 의 상태를 USING로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToUSING(){
+        this.status = CabinetStatus.USING;
+    }
+
+    // 영속성 객체인 Cabinet 의 상태를 BROKEN로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToBROKEN(){
+        this.status = CabinetStatus.BROKEN;
+    }
+
+    // 영속성 객체인 Cabinet 의 상태를 OVERDUE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToOVERDUE(){
+        this.status = CabinetStatus.OVERDUE;
     }
 }
