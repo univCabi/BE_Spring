@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Log4j2
+@EntityListeners(AuditingEntityListener.class) // 엔터티 리스너(해당 엔티티에 감사 기능을 사용하겠다고 선언)를 통하여 @CreatedDate와 @LastModifiedDate의 자동 시간 기록
 public class Cabinet {
 
     @Id
