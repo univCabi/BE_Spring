@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.univcabi.univcabi.user.entity.User;
 
 import java.time.LocalDateTime;
@@ -31,7 +32,7 @@ public class CabinetHistory {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "expired_at", nullable = false)
+    @Column(name = "expired_at")
     private LocalDateTime expiredAt;
 
     @Column(name = "updated_at", nullable = false)
@@ -58,6 +59,16 @@ public class CabinetHistory {
                 .cabinet(cabinet)
                 .expiredAt(expiredAt)
                 .build();
+    }
+
+    // 히스토리 반납 시각을 정하는 메서드
+    public void setEndedAtNow() {
+        this.endedAt = LocalDateTime.now();
+    }
+
+    // 히스토리 만료 시각을 정하는 메서드
+    public void setExpiredAtNow() {
+        this.expiredAt = LocalDateTime.now();
     }
 
 }

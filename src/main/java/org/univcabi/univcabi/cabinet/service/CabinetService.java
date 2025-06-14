@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static org.univcabi.univcabi.exception.ExceptionStatus.POSITION_NOT_FOUND;
+import static org.univcabi.univcabi.exception.ExceptionStatus.*;
 
 @Service
 public class CabinetService {
@@ -733,20 +733,32 @@ public class CabinetService {
     }
 
     // 요청들어온 사물함들의 상태 값을 변경하고 해당 사물함 정보를 반환
+    // 추후 모듈화 필요해 보임
     @Transactional
     public CabinetAdminChangeStatusResultVo changeCabinetStatusByCabinetIdsAndNewStatus(CabinetAdminChangeStatusVo requestVo)
     {
-        List<Cabinet> cabinetList = cabinetRepository.findAllById(requestVo.cabinetIds());
         CabinetStatus status = requestVo.newStatus();
 
-        List<CabinetStatusInfoVo> infoVoList = new ArrayList<>();
+        // USING, BROKEN, OVERDUE 상태 변경 시 사물함 한 개만 변경 가능
+        if(status!=CabinetStatus.AVAILABLE && requestVo.cabinetIds().size()!=1){
+            throw new ServiceException(CABINET_STATUS_MULTI_UPDATE_FAILED);
+        }
 
+        // BROKEN 상태 변경 시 이유가 존재해야 함
+        if(status==CabinetStatus.BROKEN && (requestVo.reason()==null||requestVo.reason().isBlank())){
+            throw new ServiceException(CABINET_STATUS_BROKEN_REASON_UPDATE_FAILED);
+        }
+
+        List<Cabinet> cabinetList = cabinetRepository.findAllById(requestVo.cabinetIds());
+
+        List<CabinetStatusInfoVo> infoVoList = new ArrayList<>();
 
         User user = null;
 
         if(status == CabinetStatus.OVERDUE || status == CabinetStatus.USING)
         {
-            Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber()).orElseThrow(IllegalArgumentException::new);
+            // 인증 정보와 사용자는 반드시 둘다 존재해야하기에 USER 정보로 예외처리
+            Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber()).orElseThrow(()-> new ServiceException(USER_NOT_FOUND));
             user = authn.getUser();
         }
         for(Cabinet cabinet: cabinetList){
@@ -755,13 +767,38 @@ public class CabinetService {
 
             // 분기 별로 사물함 상태 변경
             switch (status){
-                case AVAILABLE -> cabinet.replaceStatusToAVAILVABLE();
-                case USING -> cabinet.replaceStatusToUSING();
-                case OVERDUE -> cabinet.replaceStatusToOVERDUE();
+                // 사용가능한 상태로 변경 및 해당 history의 updatedAt, endedAt 정보 변경
+                case AVAILABLE -> {
+                    CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
+                    if(lateHistory!=null)
+                        lateHistory.setEndedAtNow();
+                    cabinet.replaceStatusToAVAILVABLE();
+                }
+                // 새로운 히스토리 정보를 만듬
+                case USING -> {
+                    cabinet.setUser(user);
+                    cabinet.replaceStatusToUSING();
+
+                    CabinetHistory history = CabinetHistory.createRentHistory(user,cabinet,null);
+                    cabinetHistoryRepository.save(history);
+                }
+                // 연체 상태로 변경 및 history의 updatedAt, expiredAt 정보 변경
+                case OVERDUE -> {
+                    cabinet.replaceStatusToOVERDUE();
+                    CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
+                    if(lateHistory!=null) {
+                        lateHistory.setExpiredAtNow();
+                    }
+                }
+                // 망가진 상태로 변경 및 history의 updatedAt, expiredAt 정보 변경
                 case BROKEN -> {
                     brokenDate = LocalDate.now();
                     reason= requestVo.reason();
                     cabinet.replaceStatusToBROKEN();
+                    CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
+                    if(lateHistory!=null) {
+                        lateHistory.setExpiredAtNow();
+                    }
                 }
             }
 

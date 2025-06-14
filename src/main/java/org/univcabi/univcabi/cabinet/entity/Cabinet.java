@@ -89,4 +89,8 @@ public class Cabinet {
     public void replaceStatusToOVERDUE(){
         this.status = CabinetStatus.OVERDUE;
     }
+
+    public void setUser(User user){
+        this.userId = user;
+    }
 }

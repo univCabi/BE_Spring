@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.cabinet.vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.univcabi.univcabi.cabinet.entity.BuildingName;
 import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
 
@@ -13,6 +14,7 @@ public record CabinetStatusInfoVo(
         String cabinetNumber,
         CabinetStatus status,
         String reason,
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd")
         LocalDate brokenDate,
         String userName
 ) {
