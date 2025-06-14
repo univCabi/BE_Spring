@@ -711,6 +711,10 @@ public class CabinetService {
 
         for(Cabinet cabinet: cabinetList){
             if(cabinet.getStatus() == CabinetStatus.USING || cabinet.getStatus() == CabinetStatus.OVERDUE){
+                CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
+                if(lateHistory!=null) {
+                    lateHistory.setEndedAtNow();
+                }
                 cabinet.replaceStatusToAVAILVABLE();
 
                 returnDataVoList.add(new CabinetReturnDataVo(
@@ -770,8 +774,9 @@ public class CabinetService {
                 // 사용가능한 상태로 변경 및 해당 history의 updatedAt, endedAt 정보 변경
                 case AVAILABLE -> {
                     CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
-                    if(lateHistory!=null)
+                    if(lateHistory!=null) {
                         lateHistory.setEndedAtNow();
+                    }
                     cabinet.replaceStatusToAVAILVABLE();
                 }
                 // 새로운 히스토리 정보를 만듬
