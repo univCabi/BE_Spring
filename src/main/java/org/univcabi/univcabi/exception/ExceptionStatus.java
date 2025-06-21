@@ -56,7 +56,11 @@ public enum ExceptionStatus {
 
     // Building
     BUILDING_NOT_FOUND(HttpStatus.BAD_REQUEST,"해당 건물 정보를 조회할 수 없습니다."),
-    INVALID_BUILDING_INFO(HttpStatus.BAD_REQUEST,"잘못된 건물 조회 정보입니다.");
+    INVALID_BUILDING_INFO(HttpStatus.BAD_REQUEST,"잘못된 건물 조회 정보입니다."),
+
+    // Cabinet Bookmark
+    BOOKMARK_ALREADY_EXIST(HttpStatus.BAD_REQUEST,"이미 즐겨찾기에 등록이 되어있습니다."),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 즐겨찾기 정보가 존재하지 않습니다.");
 
     // 필드 선언은 열거형 상수 뒤에 위치
     private final int statusCode;

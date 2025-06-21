@@ -39,4 +39,10 @@ public class CabinetBookmark {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 소프트 딜리트를 위한 메서드 ( 리뷰 부탁 드려용 )
+    public void setDeletedAtForSoftDelete(){
+        this.deletedAt = LocalDateTime.now();
+    }
+
 }
