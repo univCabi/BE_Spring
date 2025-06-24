@@ -122,18 +122,7 @@ public class CabinetService {
                             .orElseThrow(()-> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
 
                     User user = cabinet.getUserId();
-                    boolean isMine = false;
-                    boolean isVisible = false;
-                    String username = null;
-
-                    if(user!=null)
-                    {
-                        isMine = Objects.equals(user.getAuthn().getStudentNumber(), requestVo.studentNumber());
-                        isVisible = user.getIsVisible();
-                        username= user.getName();
-                    }
-
-                    boolean isRentAvailable = cabinet.getStatus() == CabinetStatus.AVAILABLE;
+                    // 유무료는 언제든 조건이 바뀔 수 있으니 초기 선언
                     boolean isFree = true;
 
                     return new CabinetDataVo(
@@ -142,10 +131,10 @@ public class CabinetService {
                             cabinetPosition.getCabinetXPos(),
                             cabinetPosition.getCabinetYPos(),
                             cabinet.getStatus(),
-                            isVisible,
-                            username,
-                            isMine,
-                            isRentAvailable,
+                            user!= null ? user.getIsVisible() : false,
+                            user!= null? user.getName() : null,
+                            user != null && Objects.equals(user.getAuthn().getStudentNumber(), requestVo.studentNumber()),
+                            cabinet.getStatus() == CabinetStatus.AVAILABLE,
                             isFree
                     );
                 }).toList();
@@ -618,40 +607,9 @@ public class CabinetService {
             CabinetPosition position = cabinetPositionRepository.findByCabinetId(cabinet)
                     .orElseThrow(() -> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
 
-
             User user = cabinet.getUserId();
-
-            // 기본값 null 로 초기화
-            String reason =null;
-            LocalDate rentalStartDate = null;
-            LocalDate overDate = null;
-            LocalDate brokenDate = null;
-
             Optional<CabinetHistory> cabinetHistory =
                 cabinetHistoryRepository.findTop1ByCabinetIdOrderByCreatedAtDesc(cabinet.getId());
-
-            if(cabinetHistory.isPresent()){
-                CabinetHistory history = cabinetHistory.get();
-
-                // 상태가 AVAILABLE 이 아닌 경우 해당 STATUS 반환 향후 수정
-                if(cabinet.getStatus() != CabinetStatus.AVAILABLE){
-                    reason = cabinet.getStatus().name();
-                }
-
-                // 상태가 USING 일때 rental 시작일
-                if(cabinet.getStatus() == CabinetStatus.USING){
-                    rentalStartDate = history.getCreatedAt().toLocalDate();
-                }
-
-                // 만료일
-                overDate = history.getExpiredAt().toLocalDate();
-
-                // 업데이트 날짜를 기준으로 Broken 상태일 경우 고장일 설정
-                if (cabinet.getStatus() == CabinetStatus.BROKEN){
-                    brokenDate = history.getUpdatedAt().toLocalDate();
-                }
-
-            }
 
             return new CabinetByStatusVo(
                     cabinet.getId(),
@@ -662,10 +620,20 @@ public class CabinetService {
                     cabinet.getCabinetNumber(),
                     cabinet.getStatus(),
                     user,
-                    reason,
-                    rentalStartDate,
-                    overDate,
-                    brokenDate
+                    // reason - 상태가 AVAILABLE 이 아닌 경우 해당 STATUS 반환 향후 수정
+                    cabinetHistory.isPresent() && cabinet.getStatus() != CabinetStatus.AVAILABLE? cabinet.getStatus().name(): null,
+                    // rentalStartDate - USING 상태이고 히스토리가 있을 때만
+                    cabinetHistory.isPresent() && cabinet.getStatus() == CabinetStatus.USING
+                            ? cabinetHistory.get().getCreatedAt().toLocalDate()
+                            : null,
+                    // overDate - 히스토리가 있을 때만
+                    cabinetHistory.isPresent()
+                            ? cabinetHistory.get().getExpiredAt().toLocalDate()
+                            : null,
+                    // brokenDate - BROKEN 상태이고 히스토리가 있을 때만
+                    cabinetHistory.isPresent() && cabinet.getStatus() == CabinetStatus.BROKEN
+                            ? cabinetHistory.get().getUpdatedAt().toLocalDate()
+                            : null
             );
 
         });

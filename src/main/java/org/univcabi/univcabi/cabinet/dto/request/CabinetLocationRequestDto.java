@@ -14,5 +14,5 @@ public class CabinetLocationRequestDto {
     private String building;
 
     @NotNull
-    private Integer floors;
+    private Integer floor;
 }

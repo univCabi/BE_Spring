@@ -53,7 +53,7 @@ public class CabinetController {
 
         CabinetLocationVo requestVo = new CabinetLocationVo(
                 BuildingName.valueOf(requestDto.getBuilding()),
-                requestDto.getFloors(),
+                requestDto.getFloor(),
                 authentication.getName());
 
         List<CabinetDataVo> cabinetDataVoList = cabinetService.findCabinetsByBuildingAndFloor(requestVo);
