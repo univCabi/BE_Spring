@@ -55,7 +55,7 @@ public enum ExceptionStatus {
     GENERAL_GATEWAY_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "서버에서 타임아웃이 발생했습니다"),
 
     // CABINET POSITION
-    POSITION_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 사물함 위치를 찾을 수 없습니다."),
+    CABINET_POSITION_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 사물함 위치를 찾을 수 없습니다."),
 
     // BUILDING
     BUILDING_NOT_FOUND(HttpStatus.BAD_REQUEST,"해당 건물 정보를 조회할 수 없습니다."),

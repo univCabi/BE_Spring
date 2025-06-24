@@ -6,10 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.auth.entity.Authn;
@@ -24,18 +22,15 @@ import org.univcabi.univcabi.exception.ExceptionStatus;
 import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
 import org.univcabi.univcabi.user.repository.UserRepository;
-import org.univcabi.univcabi.configs.AsyncConfig;
 
-import javax.inject.Qualifier;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static org.univcabi.univcabi.exception.ExceptionStatus.POSITION_NOT_FOUND;
+
 
 @Service
 public class CabinetService {
@@ -124,7 +119,7 @@ public class CabinetService {
                 .map(cabinet -> {
 
                     CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet)
-                            .orElseThrow(()-> new ServiceException(POSITION_NOT_FOUND));
+                            .orElseThrow(()-> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
 
                     User user = cabinet.getUserId();
                     boolean isMine = false;
@@ -621,7 +616,7 @@ public class CabinetService {
 
         return page.map(cabinet -> {
             CabinetPosition position = cabinetPositionRepository.findByCabinetId(cabinet)
-                    .orElseThrow(() -> new ServiceException(POSITION_NOT_FOUND));
+                    .orElseThrow(() -> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
 
 
             User user = cabinet.getUserId();
