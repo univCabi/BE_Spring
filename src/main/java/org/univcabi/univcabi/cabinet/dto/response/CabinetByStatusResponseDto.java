@@ -16,10 +16,10 @@ public class CabinetByStatusResponseDto {
     private BuildingName building;
     private Integer floor;
     private String section;
-    private CabinetPositionDto positionDto;
+    private Position position;
     private String cabinetNumber;
     private CabinetStatus status;
-    private CabinetUserDto cabinetUserDto;
+    private User user;
     private String reason;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.M.d")
     private LocalDate rentalStartDate;
@@ -27,4 +27,18 @@ public class CabinetByStatusResponseDto {
     private LocalDate overDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.M.d")
     private LocalDate brokenDate;
+
+    @Builder
+    public static class Position{
+        private int x,y;
+    }
+
+    @Builder
+    public static class User{
+        private String name;
+        private String studentNumber;
+    }
+
 }
+
+
