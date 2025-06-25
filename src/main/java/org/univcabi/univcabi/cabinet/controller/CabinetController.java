@@ -5,11 +5,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.univcabi.univcabi.cabinet.dto.response.*;
+import org.univcabi.univcabi.cabinet.entity.BuildingName;
+import org.univcabi.univcabi.cabinet.entity.CabinetPosition;
+import org.univcabi.univcabi.cabinet.entity.QBuilding;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.dto.request.*;
 import org.univcabi.univcabi.cabinet.service.CabinetUtilService;
@@ -20,6 +25,7 @@ import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.exception.ServiceException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
@@ -36,6 +42,27 @@ public class CabinetController {
     public CabinetController(CabinetService cabinetService, CabinetUtilService cabinetUtilService) {
         this.cabinetService = cabinetService;
         this.cabinetUtilService = cabinetUtilService;
+    }
+
+    @GetMapping
+    @Operation(summary = "빌딩 과 층에 해당하는 사물함들 정보 조회")
+    public ResponseEntity<List<CabinetDataResponseDto>> findCabinetsByBuildingAndFloor(
+            @ModelAttribute @Valid CabinetLocationRequestDto requestDto,
+            Authentication authentication
+            ){
+
+        CabinetLocationVo requestVo = new CabinetLocationVo(
+                BuildingName.valueOf(requestDto.getBuilding()),
+                requestDto.getFloor(),
+                authentication.getName());
+
+        List<CabinetDataVo> cabinetDataVoList = cabinetService.findCabinetsByBuildingAndFloor(requestVo);
+
+        List<CabinetDataResponseDto> cabinetDataResponseDtoList = cabinetDataVoList.stream()
+                .map(CabinetDataResponseDto::of)
+                .toList();
+
+        return ResponseEntity.ok(cabinetDataResponseDtoList);
     }
 
     @GetMapping("/all")
@@ -285,5 +312,63 @@ public class CabinetController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responseDto);
+    }
+
+    @GetMapping("/status/search")
+    @Operation(summary = "사물함 상태별 조회")
+    public ResponseEntity<CabinetPageResponseDto<CabinetByStatusResponseDto>> findCabinetsByStatus(
+            @ModelAttribute CabinetSearchByStatusRequestDto requestDto,
+            HttpServletRequest request
+    ){
+        // Pageable 생성
+        Pageable pageable = PageRequest.of(
+                Optional.ofNullable(requestDto.getPage()).orElse(0),
+                Optional.ofNullable(requestDto.getPageSize()).orElse(12)
+        );
+
+        CabinetStatusVo statusVo = new CabinetStatusVo(requestDto.getStatus());
+
+        Page<CabinetByStatusVo> page = cabinetService.findCabinetsByStatus(statusVo,pageable);
+
+        List<CabinetByStatusResponseDto> cabinetByStatusResponseDtoList = page.getContent().stream()
+                .map(vo ->CabinetByStatusResponseDto.builder()
+                        .id(vo.id())
+                        .building(vo.building())
+                        .floor(vo.floor())
+                        .section(vo.section())
+                        .position(CabinetByStatusResponseDto.Position.builder().build())
+                        .cabinetNumber(vo.cabinetNumber())
+                        .status(vo.status())
+                        .user(vo.user() == null ? null : CabinetByStatusResponseDto.User.builder()
+                                .name(vo.user().getName())
+                                .studentNumber(vo.user().getAuthn().getStudentNumber())
+                                .build())
+                        .reason(vo.reason())
+                        .rentalStartDate(vo.rentalStartDate())
+                        .overDate(vo.overDate())
+                        .brokenDate(vo.brokenDate())
+                        .build()
+                ).toList();
+
+        Page<CabinetByStatusResponseDto> dtoPage =
+                new PageImpl<>(cabinetByStatusResponseDtoList, pageable, page.getTotalElements());
+
+        // 응답 형식 작성
+        CabinetPageResponseVo<CabinetByStatusResponseDto> pageVo =
+                cabinetUtilService.convertToPageResponseVo(
+                        dtoPage,
+                        CabinetPageVo.of(requestDto.getPage(), requestDto.getPageSize()),
+                        request
+                );
+
+        CabinetPageResponseDto<CabinetByStatusResponseDto> response =
+                CabinetPageResponseDto.<CabinetByStatusResponseDto>builder()
+                        .count(pageVo.count())
+                        .next(pageVo.next())
+                        .previous(pageVo.previous())
+                        .results(pageVo.results())
+                        .build();
+
+        return ResponseEntity.ok(response);
     }
 }

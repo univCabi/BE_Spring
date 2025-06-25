@@ -15,4 +15,5 @@ public interface AuthnRepository extends JpaRepository<Authn, Long> {
     // 해당 학번 회원 존재 유무 판단
     boolean existsByStudentNumber(String studentNumber);
 
+
 }

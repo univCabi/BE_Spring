@@ -16,7 +16,7 @@ import org.univcabi.univcabi.exception.ExceptionStatus;
 import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.user.entity.QUser;
 import org.univcabi.univcabi.user.entity.User;
-
+import org.univcabi.univcabi.cabinet.entity.QCabinetPosition;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -60,6 +60,20 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
         }
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<Cabinet> findCabinetByBuildingAndFloor(BuildingName buildingName, int floors) {
+        QCabinet cabinet = QCabinet.cabinet;
+        QBuilding building = QBuilding.building;
+
+        return queryFactory
+                .selectFrom(cabinet)
+                .leftJoin(building).on(cabinet.buildingId.id.eq(building.id)).fetchJoin()
+                .where(
+                        building.name.eq(buildingName),
+                        building.floor.eq(floors)
+                ).fetch();
     }
 
     @Override
@@ -326,4 +340,28 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
             throw new RepositoryException(ExceptionStatus.CABINET_HISTORY_SEARCH_FAILED);
         }
     }
+
+    @Override
+    public Page<Cabinet> findCabinetByStatus(CabinetStatus status, Pageable pageable){
+        QCabinet cabinet = QCabinet.cabinet;
+        QBuilding building = QBuilding.building;
+        QUser user = QUser.user;
+
+        List<Cabinet> cabinetList = queryFactory
+                .selectFrom(cabinet)
+                .leftJoin(cabinet.buildingId,building).fetchJoin()
+                .leftJoin(cabinet.userId,user).fetchJoin()
+                .where(cabinet.status.eq(status))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        long count = queryFactory
+                .selectFrom(cabinet)
+                .where(cabinet.status.eq(status))
+                .fetchCount();
+
+        return new PageImpl<>(cabinetList,pageable,count);
+    };
+
 }
