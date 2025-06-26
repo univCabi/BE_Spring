@@ -5,11 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
-import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
 import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
-import org.univcabi.univcabi.cabinet.projection.CabinetStatusCountProjection;
 import org.univcabi.univcabi.cabinet.projection.CabinetStatusCountProjectionImpl;
 import org.univcabi.univcabi.cabinet.repository.BuildingRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetHistoryRepository;
@@ -87,7 +85,6 @@ public class AdminCabinetService {
 
     // 요청들어온 사물함들의 상태 값을 변경하고 해당 사물함 정보를 반환
     // 추후 모듈화 필요해 보임
-    @Transactional
     public CabinetAdminChangeStatusResultVo changeCabinetStatusByCabinetIdsAndNewStatus(CabinetAdminChangeStatusVo requestVo)
     {
         CabinetStatus status = requestVo.newStatus();
@@ -115,8 +112,6 @@ public class AdminCabinetService {
             user = authn.getUser();
         }
         for(Cabinet cabinet: cabinetList){
-            LocalDate brokenDate = null;
-            String reason = null;
 
             // 분기 별로 사물함 상태 변경
             switch (status){
@@ -146,9 +141,7 @@ public class AdminCabinetService {
                 }
                 // 망가진 상태로 변경 및 history의 updatedAt, expiredAt 정보 변경
                 case BROKEN -> {
-                    brokenDate = LocalDate.now();
-                    reason= requestVo.reason();
-                    cabinet.replaceStatusToBROKEN();
+                    cabinet.replaceStatusToBROKEN(requestVo.reason());
                     CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
                     if(lateHistory!=null) {
                         lateHistory.setExpiredAtNow();
@@ -162,8 +155,8 @@ public class AdminCabinetService {
                     cabinet.getBuildingId().getFloor(),
                     cabinet.getCabinetNumber(),
                     status,
-                    reason,
-                    brokenDate,
+                    status== CabinetStatus.BROKEN? cabinet.getReason():null,
+                    status== CabinetStatus.BROKEN? LocalDate.now():null,
                     user != null? user.getName() : null
             ));
         }

@@ -57,8 +57,20 @@ public class Cabinet {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "reason")
+    private String reason;
+
     @Builder(toBuilder = true)
-    private Cabinet(Long id, Building buildingId, User userId, String cabinetNumber, CabinetStatus status, LocalDateTime paidAt, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+    private Cabinet(Long id,
+                    Building buildingId,
+                    User userId,
+                    String cabinetNumber,
+                    CabinetStatus status,
+                    LocalDateTime paidAt,
+                    LocalDateTime createdAt,
+                    LocalDateTime updatedAt,
+                    LocalDateTime deletedAt,
+                    String reason) {
         this.id = id;
         this.buildingId = buildingId;
         this.userId = userId;
@@ -68,11 +80,13 @@ public class Cabinet {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
+        this.reason=reason;
     }
 
     // 영속성 객체인 Cabinet 의 상태를 AVAILABLE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
     public void replaceStatusToAVAILVABLE(){
         this.status = CabinetStatus.AVAILABLE;
+        this.reason = null;
     }
 
     // 영속성 객체인 Cabinet 의 상태를 USING로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
@@ -81,8 +95,9 @@ public class Cabinet {
     }
 
     // 영속성 객체인 Cabinet 의 상태를 BROKEN로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
-    public void replaceStatusToBROKEN(){
+    public void replaceStatusToBROKEN(String reason){
         this.status = CabinetStatus.BROKEN;
+        this.reason = reason;
     }
 
     // 영속성 객체인 Cabinet 의 상태를 OVERDUE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
