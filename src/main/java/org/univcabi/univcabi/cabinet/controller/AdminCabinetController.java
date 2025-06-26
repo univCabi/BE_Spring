@@ -14,6 +14,7 @@ import org.univcabi.univcabi.cabinet.dto.response.CabinetAdminChangeStatusRespon
 import org.univcabi.univcabi.cabinet.dto.response.CabinetReturnDataResponseDto;
 import org.univcabi.univcabi.cabinet.dto.response.CabinetReturnResultResponseDto;
 import org.univcabi.univcabi.cabinet.dto.response.CabinetStatusCountResponseDto;
+import org.univcabi.univcabi.cabinet.service.AdminCabinetService;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.vo.*;
 
@@ -25,14 +26,14 @@ import java.util.List;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminCabinetController {
-    private final CabinetService cabinetService;
+    private final AdminCabinetService adminCabinetService;
 
     @GetMapping("/dashboard")
     @Operation(summary = "건물별 사물함 사용 현황")
     public ResponseEntity<CabinetStatusCountResponseDto> getCabinetStatusCountsGroupByBuilding(){
 
         CabinetStatusCountResponseDto responseDto = CabinetStatusCountResponseDto.builder()
-                .vos(cabinetService.getCabinetStatusCountsGroupByBuilding())
+                .vos(adminCabinetService.getCabinetStatusCountsGroupByBuilding())
                 .build();
 
         return ResponseEntity.ok(responseDto);
@@ -41,7 +42,7 @@ public class AdminCabinetController {
     @PostMapping("/return")
     @Operation(summary = "반납할 사물함 id를 보내고 해당 사물함의 상태 값을 반환")
     public ResponseEntity<CabinetReturnResultResponseDto> returnCabinetsByCabinetIds(@RequestBody @Valid CabinetReturnListRequestDto requestDto){
-        CabinetReturnResultVo returnResultVo = cabinetService.returnCabinetsByCabinetIds(
+        CabinetReturnResultVo returnResultVo = adminCabinetService.returnCabinetsByCabinetIds(
                 new CabinetReturnCabinetIdsVo(requestDto.getCabinetIds()));
 
         List<CabinetReturnDataResponseDto> returnDataResponseDtoList = returnResultVo.listVos().stream()
@@ -73,7 +74,7 @@ public class AdminCabinetController {
                 requestDto.getStudentNumber()
         );
 
-        CabinetAdminChangeStatusResultVo resultVo = cabinetService.changeCabinetStatusByCabinetIdsAndNewStatus(requestVo);
+        CabinetAdminChangeStatusResultVo resultVo = adminCabinetService.changeCabinetStatusByCabinetIdsAndNewStatus(requestVo);
 
         CabinetAdminChangeStatusResponseDto responseDto = CabinetAdminChangeStatusResponseDto.builder()
                 .cabinets(resultVo.cabinetStatusInfoVos())
