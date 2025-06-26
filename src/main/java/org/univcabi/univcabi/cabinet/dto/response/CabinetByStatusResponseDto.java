@@ -38,7 +38,6 @@ public class CabinetByStatusResponseDto {
         private String name;
         private String studentNumber;
     }
-
 }
 
 

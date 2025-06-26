@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.univcabi.univcabi.user.entity.User;
 
 
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Log4j2
+@EntityListeners(AuditingEntityListener.class) // 엔터티 리스너(해당 엔티티에 감사 기능을 사용하겠다고 선언)를 통하여 @CreatedDate와 @LastModifiedDate의 자동 시간 기록
 public class Cabinet {
 
     @Id
@@ -68,4 +70,27 @@ public class Cabinet {
         this.deletedAt = deletedAt;
     }
 
+    // 영속성 객체인 Cabinet 의 상태를 AVAILABLE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToAVAILVABLE(){
+        this.status = CabinetStatus.AVAILABLE;
+    }
+
+    // 영속성 객체인 Cabinet 의 상태를 USING로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToUSING(){
+        this.status = CabinetStatus.USING;
+    }
+
+    // 영속성 객체인 Cabinet 의 상태를 BROKEN로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToBROKEN(){
+        this.status = CabinetStatus.BROKEN;
+    }
+
+    // 영속성 객체인 Cabinet 의 상태를 OVERDUE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
+    public void replaceStatusToOVERDUE(){
+        this.status = CabinetStatus.OVERDUE;
+    }
+
+    public void setUser(User user){
+        this.userId = user;
+    }
 }
