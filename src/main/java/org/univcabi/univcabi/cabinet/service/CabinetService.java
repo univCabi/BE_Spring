@@ -613,6 +613,7 @@ public class CabinetService {
             Optional<CabinetHistory> cabinetHistory =
                 cabinetHistoryRepository.findTop1ByCabinetIdOrderByCreatedAtDesc(cabinet.getId());
 
+
             return new CabinetByStatusVo(
                     cabinet.getId(),
                     cabinet.getBuildingId().getName(),
