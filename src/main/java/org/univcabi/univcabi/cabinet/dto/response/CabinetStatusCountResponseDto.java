@@ -1,9 +1,11 @@
 package org.univcabi.univcabi.cabinet.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.univcabi.univcabi.cabinet.vo.CabinetStatusCountVo;
 
 import java.util.List;
 
@@ -11,9 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CabinetPageResponseDto<T> {
-    private Integer count;
-    private String next;
-    private String previous;
-    private List<T> results;
+public class CabinetStatusCountResponseDto {
+    @JsonProperty("buildings")
+    List<CabinetStatusCountVo> vos;
 }

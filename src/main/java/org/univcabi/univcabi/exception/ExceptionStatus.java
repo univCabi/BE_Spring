@@ -38,6 +38,9 @@ public enum ExceptionStatus {
 
     CABINET_NOT_ALLOW_RENT(HttpStatus.BAD_REQUEST, "아직 대여 가능 시간이 아닙니다. 반납일 다음날 13시 이후에 대여할 수 있습니다."),
 
+    CABINET_STATUS_MULTI_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "AVAILABLE을 제외한 상태 변경은 한 개의 사물함만 가능합니다."),
+    CABINET_STATUS_BROKEN_REASON_UPDATE_FAILED(HttpStatus.BAD_REQUEST, "BROKEN 상태 변경시에는 사유가 필요합니다."),
+
     //USER
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다"),
     USER_INVALID_STUDENT_NUMBER(HttpStatus.BAD_REQUEST, "잘못된 학번입니다."),
@@ -54,7 +57,10 @@ public enum ExceptionStatus {
     GENERAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "서버가 작동하지 않고 있습니다."),
     GENERAL_GATEWAY_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "서버에서 타임아웃이 발생했습니다"),
 
-    // Building
+    // CABINET POSITION
+    CABINET_POSITION_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 사물함 위치를 찾을 수 없습니다."),
+
+    // BUILDING
     BUILDING_NOT_FOUND(HttpStatus.BAD_REQUEST,"해당 건물 정보를 조회할 수 없습니다."),
     INVALID_BUILDING_INFO(HttpStatus.BAD_REQUEST,"잘못된 건물 조회 정보입니다."),
 

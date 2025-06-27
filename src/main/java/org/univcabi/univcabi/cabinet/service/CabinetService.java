@@ -6,51 +6,47 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.cabinet.dto.CabinetKafkaDto;
-import org.univcabi.univcabi.cabinet.entity.Building;
-import org.univcabi.univcabi.cabinet.entity.Cabinet;
-import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
-import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
+import org.univcabi.univcabi.cabinet.entity.*;
+import org.univcabi.univcabi.cabinet.repository.BuildingRepository;
+import org.univcabi.univcabi.cabinet.repository.CabinetHistoryRepository;
+import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
 import org.univcabi.univcabi.cabinet.vo.*;
 import org.univcabi.univcabi.exception.ExceptionStatus;
 import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
 import org.univcabi.univcabi.user.repository.UserRepository;
-import org.univcabi.univcabi.configs.AsyncConfig;
 
-import javax.inject.Qualifier;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+
 
 @Service
 public class CabinetService {
     private static final Logger logger = LoggerFactory.getLogger(CabinetService.class);
 
     private final CabinetRepository cabinetRepository;
+    private final CabinetPositionRepository cabinetPositionRepository;
+    private final CabinetHistoryRepository cabinetHistoryRepository;
+    private final BuildingRepository buildingRepository;
     private final UserRepository userRepository;
     private final AuthnRepository authnRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CabinetKafkaProducerService kafkaProducerService;
     private final ReservationQueueManager queueManager;
-
     private final CabinetUtilService cabinetUtilService;
-
     private final CabinetRedisService cabinetRedisService;
 
     private final Executor cabinetTaskExecutor;
@@ -68,6 +64,9 @@ public class CabinetService {
     public CabinetService(
             CabinetRepository cabinetRepository,
             UserRepository userRepository,
+            CabinetPositionRepository cabinetPositionRepository,
+            CabinetHistoryRepository cabinetHistoryRepository,
+            BuildingRepository buildingRepository,
             AuthnRepository authnRepository,
             RedisTemplate<String, Object> redisTemplate,
             CabinetKafkaProducerService kafkaProducerService,
@@ -77,6 +76,9 @@ public class CabinetService {
             Executor cabinetTaskExecutor, CabinetFallbackService cabinetFallbackService) {
         this.cabinetRepository = cabinetRepository;
         this.userRepository = userRepository;
+        this.cabinetPositionRepository = cabinetPositionRepository;
+        this.cabinetHistoryRepository = cabinetHistoryRepository;
+        this.buildingRepository =buildingRepository;
         this.authnRepository = authnRepository;
         this.redisTemplate = redisTemplate;
         this.kafkaProducerService = kafkaProducerService;
@@ -107,6 +109,38 @@ public class CabinetService {
                 cabinet.getBuildingId().getFloor(),
                 cabinet.getCabinetNumber()
         ));
+    }
+
+    public List<CabinetDataVo> findCabinetsByBuildingAndFloor(CabinetLocationVo requestVo){
+        List<Cabinet> cabinetList  =  cabinetRepository.findCabinetByBuildingAndFloor(
+                requestVo.building(),
+                requestVo.floors()
+        );
+
+        return cabinetList.stream()
+                .map(cabinet -> {
+
+                    CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet)
+                            .orElseThrow(()-> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
+
+                    User user = cabinet.getUserId();
+                    // 유무료는 언제든 조건이 바뀔 수 있으니 초기 선언
+                    boolean isFree = true;
+
+                    return new CabinetDataVo(
+                            cabinet.getId(),
+                            cabinet.getCabinetNumber(),
+                            cabinetPosition.getCabinetXPos(),
+                            cabinetPosition.getCabinetYPos(),
+                            cabinet.getStatus(),
+                            user!= null ? user.getIsVisible() : false,
+                            user!= null? user.getName() : null,
+                            user != null && Objects.equals(user.getAuthn().getStudentNumber(), requestVo.studentNumber()),
+                            cabinet.getStatus() == CabinetStatus.AVAILABLE,
+                            isFree
+                    );
+                }).toList();
+
     }
 
     public CabinetDetailVo findOneCabinetInfo(CabinetFindOneVo requestVo) {
@@ -566,6 +600,46 @@ public class CabinetService {
     }
 
 
+    // 사물함 상태를 page 객체에 담아 반환
+    public Page<CabinetByStatusVo> findCabinetsByStatus(CabinetStatusVo statusVo, Pageable pageable){
+
+        Page<Cabinet> page = cabinetRepository.findCabinetByStatus(statusVo.status(),pageable);
+
+        return page.map(cabinet -> {
+            CabinetPosition position = cabinetPositionRepository.findByCabinetId(cabinet)
+                    .orElseThrow(() -> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
+
+            User user = cabinet.getUserId();
+            Optional<CabinetHistory> cabinetHistory =
+                cabinetHistoryRepository.findTop1ByCabinetIdOrderByCreatedAtDesc(cabinet.getId());
 
 
+            return new CabinetByStatusVo(
+                    cabinet.getId(),
+                    cabinet.getBuildingId().getName(),
+                    cabinet.getBuildingId().getFloor(),
+                    cabinet.getBuildingId().getSection(),
+                    position,
+                    cabinet.getCabinetNumber(),
+                    cabinet.getStatus(),
+                    user,
+                    // reason - 상태가 AVAILABLE 이 아닌 경우 해당 STATUS 반환 향후 수정
+                    cabinetHistory.isPresent() && cabinet.getStatus() != CabinetStatus.AVAILABLE? cabinet.getStatus().name(): null,
+                    // rentalStartDate - USING 상태이고 히스토리가 있을 때만
+                    cabinetHistory.isPresent() && cabinet.getStatus() == CabinetStatus.USING
+                            ? cabinetHistory.get().getCreatedAt().toLocalDate()
+                            : null,
+                    // overDate - 히스토리가 있을 때만
+                    cabinetHistory.isPresent()
+                            ? cabinetHistory.get().getExpiredAt().toLocalDate()
+                            : null,
+                    // brokenDate - BROKEN 상태이고 히스토리가 있을 때만
+                    cabinetHistory.isPresent() && cabinet.getStatus() == CabinetStatus.BROKEN
+                            ? cabinetHistory.get().getUpdatedAt().toLocalDate()
+                            : null
+            );
+
+        });
+
+    }
 }
