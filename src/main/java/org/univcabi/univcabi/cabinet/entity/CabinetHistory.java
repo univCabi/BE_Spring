@@ -1,10 +1,8 @@
 package org.univcabi.univcabi.cabinet.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.cglib.core.Local;
 import org.univcabi.univcabi.user.entity.User;
 
 import java.time.LocalDateTime;
@@ -31,12 +29,16 @@ public class CabinetHistory {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "expired_at", nullable = false)
+    // 히스토리 만료 시각을 정하는 메서드
+    @Setter // 세터를 사용하여 expiredAt 파라미터 값 변경
+    @Column(name = "expired_at")
     private LocalDateTime expiredAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // 히스토리 반납 시각을 정하는 메서드
+    @Setter
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 

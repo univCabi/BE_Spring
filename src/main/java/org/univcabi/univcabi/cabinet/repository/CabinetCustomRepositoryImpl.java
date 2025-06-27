@@ -1,5 +1,6 @@
 package org.univcabi.univcabi.cabinet.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAInsertClause;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.univcabi.univcabi.auth.entity.QAuthn;
 import org.univcabi.univcabi.cabinet.entity.*;
+import org.univcabi.univcabi.cabinet.projection.CabinetStatusCountProjection;
+import org.univcabi.univcabi.cabinet.projection.CabinetStatusCountProjectionImpl;
 import org.univcabi.univcabi.exception.ExceptionStatus;
 import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.user.entity.QUser;
@@ -363,5 +366,26 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
 
         return new PageImpl<>(cabinetList,pageable,count);
     };
+
+    @Override
+    public List<CabinetStatusCountProjectionImpl> findCabinetStatusCountsGroupByBuilding() {
+        QCabinet cabinet = QCabinet.cabinet;
+        QBuilding building = QBuilding.building;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        CabinetStatusCountProjectionImpl.class,
+                        building.name,
+                        cabinet.id.count(),
+                        cabinet.status.when(CabinetStatus.USING).then(1L).otherwise(0L).sum(),
+                        cabinet.status.when(CabinetStatus.OVERDUE).then(1L).otherwise(0L).sum(),
+                        cabinet.status.when(CabinetStatus.BROKEN).then(1L).otherwise(0L).sum(),
+                        cabinet.status.when(CabinetStatus.AVAILABLE).then(1L).otherwise(0L).sum()
+                ))
+                .from(building)
+                .leftJoin(cabinet).on(cabinet.buildingId.eq(building))
+                .groupBy(building.name)
+                .fetch();
+    }
 
 }

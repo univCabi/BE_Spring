@@ -14,6 +14,7 @@ import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.cabinet.dto.CabinetKafkaDto;
 import org.univcabi.univcabi.cabinet.entity.*;
+import org.univcabi.univcabi.cabinet.repository.BuildingRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetHistoryRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.repository.CabinetRepository;
@@ -39,14 +40,13 @@ public class CabinetService {
     private final CabinetRepository cabinetRepository;
     private final CabinetPositionRepository cabinetPositionRepository;
     private final CabinetHistoryRepository cabinetHistoryRepository;
+    private final BuildingRepository buildingRepository;
     private final UserRepository userRepository;
     private final AuthnRepository authnRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final CabinetKafkaProducerService kafkaProducerService;
     private final ReservationQueueManager queueManager;
-
     private final CabinetUtilService cabinetUtilService;
-
     private final CabinetRedisService cabinetRedisService;
 
     private final Executor cabinetTaskExecutor;
@@ -66,6 +66,7 @@ public class CabinetService {
             UserRepository userRepository,
             CabinetPositionRepository cabinetPositionRepository,
             CabinetHistoryRepository cabinetHistoryRepository,
+            BuildingRepository buildingRepository,
             AuthnRepository authnRepository,
             RedisTemplate<String, Object> redisTemplate,
             CabinetKafkaProducerService kafkaProducerService,
@@ -77,6 +78,7 @@ public class CabinetService {
         this.userRepository = userRepository;
         this.cabinetPositionRepository = cabinetPositionRepository;
         this.cabinetHistoryRepository = cabinetHistoryRepository;
+        this.buildingRepository =buildingRepository;
         this.authnRepository = authnRepository;
         this.redisTemplate = redisTemplate;
         this.kafkaProducerService = kafkaProducerService;
@@ -639,6 +641,4 @@ public class CabinetService {
         });
 
     }
-
-
 }

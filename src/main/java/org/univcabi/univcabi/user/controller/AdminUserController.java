@@ -19,13 +19,13 @@ import org.univcabi.univcabi.user.vo.AdminUserCreateVo;
 @RequestMapping("/user/admin")
 @RequiredArgsConstructor
 @Tag(name="관리자 회원 정보 관리")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
     private final UserService userService;
 
     @PostMapping("/user/create")
     @Operation(summary = "관리자 생성")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> createAdminUser(@RequestBody @Valid AdminUserCreateRequestDto requestDto){
 
         AdminUserCreateVo requestVo = new AdminUserCreateVo(

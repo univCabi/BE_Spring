@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.univcabi.univcabi.cabinet.entity.Building;
 import org.univcabi.univcabi.cabinet.entity.Cabinet;
 
 import java.util.List;
@@ -27,4 +28,7 @@ public interface CabinetRepository extends JpaRepository<Cabinet, Long>, Cabinet
             "CAST(b.name AS string) LIKE CONCAT('%', :keyword, '%') OR " +
             "CAST(b.floor AS string) LIKE CONCAT('%', :keyword, '%'))")
     Page<Cabinet> findAllCabinetInfoByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    List<Cabinet> findByBuildingId(Building buildingId);
+
 }
