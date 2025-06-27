@@ -83,27 +83,19 @@ public class Cabinet {
         this.reason=reason;
     }
 
-    // 영속성 객체인 Cabinet 의 상태를 AVAILABLE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
-    public void replaceStatusToAVAILVABLE(){
-        this.status = CabinetStatus.AVAILABLE;
-        this.reason = null;
+    // 영속성 객체인 Cabinet 의 상태를 Status 매개변수로 변경하는 메서드
+    public void setStatus(CabinetStatus status){
+        this.status= status;
+        if(status==CabinetStatus.AVAILABLE) {
+            this.reason=null;
+        }
     }
-
-    // 영속성 객체인 Cabinet 의 상태를 USING로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
-    public void replaceStatusToUSING(){
-        this.status = CabinetStatus.USING;
-    }
-
-    // 영속성 객체인 Cabinet 의 상태를 BROKEN로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
-    public void replaceStatusToBROKEN(String reason){
-        this.status = CabinetStatus.BROKEN;
+    // status가 BROKEN일 때 사용되는 메서드 오버로딩 (reason)파라미터 값을 받음
+    public void setStatus(CabinetStatus status, String reason){
+        this.status=status;
         this.reason = reason;
     }
 
-    // 영속성 객체인 Cabinet 의 상태를 OVERDUE로 바꾸는 메서드 (리뷰 부탁드리옵니다);;
-    public void replaceStatusToOVERDUE(){
-        this.status = CabinetStatus.OVERDUE;
-    }
 
     public void setUser(User user){
         this.userId = user;

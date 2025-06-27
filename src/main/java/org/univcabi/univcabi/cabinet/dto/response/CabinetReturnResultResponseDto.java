@@ -1,6 +1,7 @@
 package org.univcabi.univcabi.cabinet.dto.response;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CabinetReturnResultResponseDto {
+
+    @JsonProperty("cabinets")
     private List<CabinetReturnDataResponseDto> dtoList;
     private String message;
     private List<String> errors;

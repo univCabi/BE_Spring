@@ -18,6 +18,7 @@ import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,9 +61,9 @@ public class AdminCabinetService {
             if(cabinet.getStatus() == CabinetStatus.USING || cabinet.getStatus() == CabinetStatus.OVERDUE){
                 CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
                 if(lateHistory!=null) {
-                    lateHistory.setEndedAtNow();
+                    lateHistory.setEndedAt(LocalDateTime.now());
                 }
-                cabinet.replaceStatusToAVAILVABLE();
+                cabinet.setStatus(CabinetStatus.AVAILABLE);
 
                 returnDataVoList.add(new CabinetReturnDataVo(
                         cabinet.getId(),
@@ -119,32 +120,32 @@ public class AdminCabinetService {
                 case AVAILABLE -> {
                     CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
                     if(lateHistory!=null) {
-                        lateHistory.setEndedAtNow();
+                        lateHistory.setEndedAt(LocalDateTime.now());
                     }
-                    cabinet.replaceStatusToAVAILVABLE();
+                    cabinet.setStatus(status);
                 }
                 // 새로운 히스토리 정보를 만듬
                 case USING -> {
                     cabinet.setUser(user);
-                    cabinet.replaceStatusToUSING();
+                    cabinet.setStatus(status);
 
                     CabinetHistory history = CabinetHistory.createRentHistory(user,cabinet,null);
                     cabinetHistoryRepository.save(history);
                 }
                 // 연체 상태로 변경 및 history의 updatedAt, expiredAt 정보 변경
                 case OVERDUE -> {
-                    cabinet.replaceStatusToOVERDUE();
+                    cabinet.setStatus(status);
                     CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
                     if(lateHistory!=null) {
-                        lateHistory.setExpiredAtNow();
+                        lateHistory.setExpiredAt(LocalDateTime.now());
                     }
                 }
                 // 망가진 상태로 변경 및 history의 updatedAt, expiredAt 정보 변경
                 case BROKEN -> {
-                    cabinet.replaceStatusToBROKEN(requestVo.reason());
+                    cabinet.setStatus(status,requestVo.reason());
                     CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
                     if(lateHistory!=null) {
-                        lateHistory.setExpiredAtNow();
+                        lateHistory.setExpiredAt(LocalDateTime.now());
                     }
                 }
             }
