@@ -1,6 +1,7 @@
 package org.univcabi.univcabi.cabinet.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import org.univcabi.univcabi.cabinet.entity.CabinetStatus;
 @AllArgsConstructor
 public class CabinetSearchByStatusRequestDto {
 
-    @NotBlank
+    @NotNull(message = "상태는 필수입니다")
     private CabinetStatus status;
 
     private Integer page;
