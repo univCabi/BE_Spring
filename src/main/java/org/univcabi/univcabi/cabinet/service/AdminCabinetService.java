@@ -134,6 +134,7 @@ public class AdminCabinetService {
                 }
                 // 연체 상태로 변경 및 history의 updatedAt, expiredAt 정보 변경
                 case OVERDUE -> {
+                    cabinet.setUser(user);
                     cabinet.setStatus(status);
                     CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
                     if(lateHistory!=null) {

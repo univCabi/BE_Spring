@@ -28,12 +28,18 @@ public class CabinetByStatusResponseDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.M.d")
     private LocalDate brokenDate;
 
+    @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Position{
         private int x,y;
     }
 
+    @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class User{
         private String name;
         private String studentNumber;

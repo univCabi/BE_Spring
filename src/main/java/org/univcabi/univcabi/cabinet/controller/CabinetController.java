@@ -317,12 +317,12 @@ public class CabinetController {
     @GetMapping("/status/search")
     @Operation(summary = "사물함 상태별 조회")
     public ResponseEntity<CabinetPageResponseDto<CabinetByStatusResponseDto>> findCabinetsByStatus(
-            @ModelAttribute CabinetSearchByStatusRequestDto requestDto,
+            @ModelAttribute @Valid CabinetSearchByStatusRequestDto requestDto,
             HttpServletRequest request
     ){
-        // Pageable 생성
+        // Pageable 생성 page는 null 이면 0부터 jap는 0 부터 시작이기에 1값이 들어오면 0 페이지부터
         Pageable pageable = PageRequest.of(
-                Optional.ofNullable(requestDto.getPage()).orElse(0),
+                requestDto.getPage() != null ? Math.max(0, requestDto.getPage() - 1) : 0,
                 Optional.ofNullable(requestDto.getPageSize()).orElse(12)
         );
 
