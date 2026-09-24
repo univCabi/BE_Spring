@@ -117,11 +117,17 @@ public class CabinetService {
                 requestVo.floors()
         );
 
+       List<CabinetPosition> cabinetPositions = cabinetPositionRepository.findByCabinetIdIn(cabinetList);
+        Map<Long, CabinetPosition> cabinetPositionMap = cabinetPositions.stream()
+                .collect(Collectors.toMap(
+                        position -> position.getCabinetId().getId(),
+                        position -> position
+                ));
+
         return cabinetList.stream()
                 .map(cabinet -> {
 
-                    CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet)
-                            .orElseThrow(()-> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
+                    CabinetPosition cabinetPosition = cabinetPositionMap.get(cabinet.getId());
 
                     User user = cabinet.getUserId();
                     // 유무료는 언제든 조건이 바뀔 수 있으니 초기 선언

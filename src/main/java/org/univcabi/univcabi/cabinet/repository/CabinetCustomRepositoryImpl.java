@@ -69,10 +69,15 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
     public List<Cabinet> findCabinetByBuildingAndFloor(BuildingName buildingName, int floors) {
         QCabinet cabinet = QCabinet.cabinet;
         QBuilding building = QBuilding.building;
+        QUser user = QUser.user;
+        QAuthn authn = QAuthn.authn;
+
 
         return queryFactory
                 .selectFrom(cabinet)
-                .leftJoin(building).on(cabinet.buildingId.id.eq(building.id)).fetchJoin()
+                .join(cabinet.buildingId, building).fetchJoin()
+                .leftJoin(cabinet.userId, user).fetchJoin()
+                .leftJoin(cabinet.userId.authn, authn).fetchJoin()
                 .where(
                         building.name.eq(buildingName),
                         building.floor.eq(floors)
