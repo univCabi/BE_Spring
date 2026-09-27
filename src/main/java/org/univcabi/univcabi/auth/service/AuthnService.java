@@ -7,11 +7,10 @@ import org.springframework.stereotype.Service;
 import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
-import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
-import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
-import org.univcabi.univcabi.auth.vo.AuthnLoginVo;
-import org.univcabi.univcabi.auth.vo.AuthnTokenGenerateVo;
+import org.univcabi.univcabi.auth.vo.*;
 import org.univcabi.univcabi.exception.ServiceException;
+import org.univcabi.univcabi.user.entity.User;
+import org.univcabi.univcabi.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 
@@ -24,29 +23,39 @@ import static org.univcabi.univcabi.exception.ExceptionStatus.*;
 public class AuthnService {
 
     private final AuthnRepository authnRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public AuthnCreateVo createUser(AuthnCreateVo requestVo) {
+    public AuthnCreateResponseVo createUser(AuthnCreateRequestVo requestVo) {
 
         // 중복 회원인지 검사
         if(authnRepository.existsByStudentNumber(requestVo.studentNumber())){
             throw new ServiceException(AUTH_DUPLICATE_STUDENT_NUMBER);
         }
 
-        Authn user = Authn.builder()
+        User user = User.builder()
+                .name(requestVo.name())
+                .affiliation(requestVo.affiliation())
+                .phoneNumber(requestVo.phoneNumber())
+                .isVisible(true)
+                .build();
+
+        userRepository.save(user);
+
+        Authn authn = Authn.builder()
                 .studentNumber(requestVo.studentNumber())
                 .password(requestVo.password())
                 .role(requestVo.role())
+                .user(user)
                 .deletedAt(null)
                 .build();
 
         // 회원 저장
-        authnRepository.save(user);
+        authnRepository.save(authn);
 
-        AuthnCreateVo responseVo = new AuthnCreateVo(
-                user.getStudentNumber(),
-                user.getPassword(),
-                user.getRole()
+        AuthnCreateResponseVo responseVo = new AuthnCreateResponseVo(
+                user.getName(),
+                authn.getStudentNumber()
         );
 
         return responseVo;
