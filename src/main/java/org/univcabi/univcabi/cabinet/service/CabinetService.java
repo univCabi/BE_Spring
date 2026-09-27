@@ -279,7 +279,7 @@ public class CabinetService {
                                 Building building = cabinet.getBuildingId();
 
                                 // 사용자 정보 조회
-                                Authn authn = authnRepository.findByStudentNumber(studentNumber).orElseThrow(
+                                Authn authn = authnRepository.findWithUserByStudentNumber(studentNumber).orElseThrow(
                                         () -> new ServiceException(ExceptionStatus.USER_NOT_FOUND)
                                 );
                                 User user = authn.getUser();
@@ -369,7 +369,7 @@ public class CabinetService {
                         if (cabinet.getStatus() == CabinetStatus.USING) {
                             // 성공 케이스 처리
                             Building building = cabinet.getBuildingId();
-                            Optional<Authn> authnOpt = authnRepository.findByStudentNumber(studentNumber);
+                            Optional<Authn> authnOpt = authnRepository.findWithUserByStudentNumber(studentNumber);
 
                             if (authnOpt.isPresent()) {
                                 User user = authnOpt.get().getUser();
@@ -555,7 +555,7 @@ public class CabinetService {
                 .map(cabinet -> new CabinetVo(
                         cabinet.getBuildingId().getName(),  // buildingName
                         cabinet.getBuildingId().getFloor(), // floor
-                        cabinet.getCabinetNumber()          // cabPinetNumber
+                        cabinet.getCabinetNumber()          // cabinetNumber
                 ))
                 .collect(Collectors.toList());
     }

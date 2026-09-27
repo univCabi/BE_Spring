@@ -16,8 +16,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// 수동 EXPLAIN 실습을 위해 종료 후에도 테이블과 데이터를 남긴다.
-// 다시 실행하면 create에 의해 기존 테스트 테이블과 직접 만든 인덱스가 초기화된다.
 @DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=create")
 @Import(QueryDslConfig.class)
 class CabinetIndexIntegrationTest {
