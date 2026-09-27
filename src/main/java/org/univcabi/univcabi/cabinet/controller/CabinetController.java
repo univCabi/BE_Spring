@@ -40,12 +40,10 @@ import static org.univcabi.univcabi.exception.ExceptionStatus.*;
 public class CabinetController {
     private final CabinetService cabinetService;
     private final CabinetUtilService cabinetUtilService;
-    private final CabinetPositionRepository cabinetPositionRepository;
 
-    public CabinetController(CabinetService cabinetService, CabinetUtilService cabinetUtilService, CabinetPositionRepository cabinetPositionRepository) {
+    public CabinetController(CabinetService cabinetService, CabinetUtilService cabinetUtilService) {
         this.cabinetService = cabinetService;
         this.cabinetUtilService = cabinetUtilService;
-        this.cabinetPositionRepository = cabinetPositionRepository;
     }
 
     @GetMapping

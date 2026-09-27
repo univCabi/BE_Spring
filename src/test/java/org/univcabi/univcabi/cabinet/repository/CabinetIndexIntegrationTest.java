@@ -25,7 +25,6 @@ class CabinetIndexIntegrationTest {
     @Autowired EntityManager entityManager;
 
     @Test
-    @Commit
     void findCabinetByBuildingAndFloor_printSqlForManualExplain() {
         Building building = Building.builder()
                 .name(BuildingName.공학1관)

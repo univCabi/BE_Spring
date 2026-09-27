@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.connection.MessageListener;
@@ -554,7 +555,7 @@ public class CabinetService {
                 .map(cabinet -> new CabinetVo(
                         cabinet.getBuildingId().getName(),  // buildingName
                         cabinet.getBuildingId().getFloor(), // floor
-                        cabinet.getCabinetNumber()          // cabinetNumber
+                        cabinet.getCabinetNumber()          // cabPinetNumber
                 ))
                 .collect(Collectors.toList());
     }
@@ -616,7 +617,11 @@ public class CabinetService {
         List<Cabinet> cabinets = page.getContent();
 
         if (cabinets.isEmpty()) {
-            return Page.empty(pageable);
+            return new PageImpl<>(
+                    List.of(),
+                    pageable,
+                    page.getTotalElements()
+            );
         }
 
         Map<Long, CabinetPosition> positionMap =
