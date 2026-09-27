@@ -25,11 +25,12 @@ public class UserRepositoryImpl implements UserRepositoryCustom{
 
     private final JPAQueryFactory queryFactory;
 
+
     // StudentNumber에 해당 하는 User의 building, cabinet, cabinet_history 정보 조회
     @Override
     public Optional<CabinetHistory> getLatestCabinetHistoryByStudentNumber(String studentNumber){
 
-        if(studentNumber ==null) {
+        if(studentNumber == null) {
             throw new ControllerException(USER_INVALID_STUDENT_NUMBER);
         }
 
@@ -44,7 +45,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom{
                 .join(history.user, user).fetchJoin()
                 .join(history.cabinet,cabinet).fetchJoin()
                 .join(user.authn,authn).fetchJoin()
-                .join(cabinet.buildingId,building)
+                .join(cabinet.buildingId,building).fetchJoin()
                 .where(
                         authn.studentNumber.eq(studentNumber),
                         history.endedAt.isNull()  // endDate 가 Null인 경우에만 조회( 반납 했을시 Null 반환하도록 )
@@ -71,7 +72,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom{
 
         User result = queryFactory
                 .selectFrom(user)
-                .join(user.authn,authn)
+                .join(user.authn, authn).fetchJoin()
                 .where(authn.studentNumber.eq(studentNumber))
                 .fetchOne();
 
@@ -92,11 +93,11 @@ public class UserRepositoryImpl implements UserRepositoryCustom{
         }
 
         QUser user = QUser.user;
-        QAuthn authn =QAuthn.authn;
+        QAuthn authn = QAuthn.authn;
 
         return queryFactory
                 .update(user)
-                .set(user.isVisible,isVisible)
+                .set(user.isVisible, isVisible)
                 .where(user.authn.id.eq(
                         JPAExpressions
                                 .select(authn.id)

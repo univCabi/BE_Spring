@@ -38,7 +38,7 @@ public class User {
     @Column(name="phone_number")
     private String phoneNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id", nullable = true)
     private Building building;  // 이것만 유지하고 다른 building 관련 필드는 제거
 

@@ -76,8 +76,7 @@ public class UserService {
     // User정보의 isVisible 파라미터 수정
     @Transactional
     public void updateUserVisibility(UserVisibilityVo requestVo){
-        if(userRepository.updateUserVisibilityByStudentNumber(
-                requestVo.studentNumber(),requestVo.isVisible())==0){
+        if(userRepository.updateUserVisibilityByStudentNumber(requestVo.studentNumber(), requestVo.isVisible()) == 0){
             throw new ServiceException(USER_VISIBILITY_UPDATE_FAILED);
         }
     }
