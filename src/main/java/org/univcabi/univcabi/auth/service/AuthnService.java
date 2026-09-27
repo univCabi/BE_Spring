@@ -8,9 +8,12 @@ import org.univcabi.univcabi.auth.entity.Authn;
 import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.repository.AuthnRepository;
 import org.univcabi.univcabi.auth.vo.*;
+import org.univcabi.univcabi.cabinet.entity.Building;
+import org.univcabi.univcabi.cabinet.repository.BuildingRepository;
 import org.univcabi.univcabi.exception.ServiceException;
 import org.univcabi.univcabi.user.entity.User;
 import org.univcabi.univcabi.user.repository.UserRepository;
+import org.univcabi.univcabi.user.vo.AdminUserCreateVo;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +27,7 @@ public class AuthnService {
 
     private final AuthnRepository authnRepository;
     private final UserRepository userRepository;
+    private final BuildingRepository buildingRepository;
 
     @Transactional
     public AuthnCreateResponseVo createUser(AuthnCreateRequestVo requestVo) {
@@ -33,10 +37,13 @@ public class AuthnService {
             throw new ServiceException(AUTH_DUPLICATE_STUDENT_NUMBER);
         }
 
+        Building building = findBuildingOrNull(requestVo);
+
         User user = User.builder()
                 .name(requestVo.name())
                 .affiliation(requestVo.affiliation())
                 .phoneNumber(requestVo.phoneNumber())
+                .building(building)
                 .isVisible(true)
                 .build();
 
@@ -95,6 +102,21 @@ public class AuthnService {
         return authnRepository.findByStudentNumber(studentNumber)
                 .map(Authn::getRole)
                 .orElseThrow(()->new ServiceException(USER_NOT_FOUND));
+    }
+
+    private Building findBuildingOrNull(AuthnCreateRequestVo vo) {
+        boolean allNull = vo.buildingName() == null && vo.floor() == null && vo.section() == null;
+        boolean allPresent = vo.buildingName() != null && vo.floor() != null && vo.section() != null;
+
+        if (allNull) {
+            return null;                                   // 빌딩 미지정
+        }
+        if (!allPresent) {
+            throw new ServiceException(INVALID_BUILDING_INFO);   // 일부만 입력
+        }
+        return buildingRepository.findBuildingByNameAndFloorAndSection(
+                        vo.buildingName(), vo.floor(), vo.section())
+                .orElseThrow(() -> new ServiceException(BUILDING_NOT_FOUND));
     }
 
 }

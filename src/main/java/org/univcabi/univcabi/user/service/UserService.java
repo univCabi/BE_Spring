@@ -123,25 +123,8 @@ public class UserService {
     // ADMIN 유저 생성 서비스 로직
     @Transactional
     public void createAdminUser(AdminUserCreateVo requestVo){
-        Building building = null;
-
         // building 관련 값이 모두 있을 때 -> 조회
-        boolean havingAllValue = requestVo.buildingName() != null
-                && requestVo.floor() != null
-                && requestVo.section() != null;
-
-        // building 관련 값이 일부만 있을 때 -> 잘못된 요청 예외처리
-        boolean havingAnyValue = requestVo.buildingName() != null
-                || requestVo.floor() != null
-                || requestVo.section() != null;
-
-        if(havingAllValue){
-            building = buildingRepository.findBuildingByNameAndFloorAndSection(
-                    requestVo.buildingName(), requestVo.floor(), requestVo.section()
-            ).orElseThrow(() -> new ServiceException(BUILDING_NOT_FOUND));
-        } else if (havingAnyValue){
-            throw new ServiceException(INVALID_BUILDING_INFO);
-        }
+        Building building = findBuildingOrNull(requestVo);
 
         User user = User.builder()
                 .name(requestVo.name())
@@ -161,5 +144,20 @@ public class UserService {
                 .build();
 
         authnRepository.save(authn);
+    }
+
+    private Building findBuildingOrNull(AdminUserCreateVo vo) {
+        boolean allNull = vo.buildingName() == null && vo.floor() == null && vo.section() == null;
+        boolean allPresent = vo.buildingName() != null && vo.floor() != null && vo.section() != null;
+
+        if (allNull) {
+            return null;                                   // 빌딩 미지정
+        }
+        if (!allPresent) {
+            throw new ServiceException(INVALID_BUILDING_INFO);   // 일부만 입력
+        }
+        return buildingRepository.findBuildingByNameAndFloorAndSection(
+                        vo.buildingName(), vo.floor(), vo.section())
+                .orElseThrow(() -> new ServiceException(BUILDING_NOT_FOUND));
     }
 }
