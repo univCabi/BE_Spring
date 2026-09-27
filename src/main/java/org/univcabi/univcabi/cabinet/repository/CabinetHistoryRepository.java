@@ -2,6 +2,7 @@ package org.univcabi.univcabi.cabinet.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.univcabi.univcabi.cabinet.entity.CabinetHistory;
 
 import java.util.List;
@@ -17,4 +18,25 @@ public interface CabinetHistoryRepository extends JpaRepository<CabinetHistory, 
     // 가장 최근 사물함 중 이용중인 사물함 내역 조회
     @Query("SELECT ch FROM CabinetHistory ch WHERE ch.cabinet.id = :cabinetId AND ch.endedAt IS NULL ORDER BY ch.createdAt DESC")
     CabinetHistory findLatestActiveHistoryByCabinetId(Long cabinetId);
+
+    @Query("""
+      SELECT h
+      FROM CabinetHistory h
+      WHERE h.cabinet.id IN :cabinetIds
+        AND NOT EXISTS (
+            SELECT newer.id
+            FROM CabinetHistory newer
+            WHERE newer.cabinet = h.cabinet
+              AND (
+                  newer.createdAt > h.createdAt
+                  OR (
+                      newer.createdAt = h.createdAt
+                      AND newer.id > h.id
+                  )
+              )
+        )
+      """)
+    List<CabinetHistory> findLatestHistoriesByCabinetIds(
+            @Param("cabinetIds") List<Long> cabinetIds
+    );
 }

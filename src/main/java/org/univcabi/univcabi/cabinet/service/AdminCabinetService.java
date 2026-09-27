@@ -60,7 +60,7 @@ public class AdminCabinetService {
         for(Cabinet cabinet: cabinetList){
             if(cabinet.getStatus() == CabinetStatus.USING || cabinet.getStatus() == CabinetStatus.OVERDUE){
                 CabinetHistory lateHistory = cabinetHistoryRepository.findLatestActiveHistoryByCabinetId(cabinet.getId());
-                if(lateHistory!=null) {
+                if(lateHistory != null) {
                     lateHistory.setEndedAt(LocalDateTime.now());
                 }
                 cabinet.setStatus(CabinetStatus.AVAILABLE);
@@ -91,12 +91,12 @@ public class AdminCabinetService {
         CabinetStatus status = requestVo.newStatus();
 
         // USING, BROKEN, OVERDUE 상태 변경 시 사물함 한 개만 변경 가능
-        if(status!=CabinetStatus.AVAILABLE && requestVo.cabinetIds().size()!=1){
+        if(status != CabinetStatus.AVAILABLE && requestVo.cabinetIds().size()!=1){
             throw new ServiceException(ExceptionStatus.CABINET_STATUS_MULTI_UPDATE_FAILED);
         }
 
         // BROKEN 상태 변경 시 이유가 존재해야 함
-        if(status==CabinetStatus.BROKEN && (requestVo.reason()==null||requestVo.reason().isBlank())){
+        if(status == CabinetStatus.BROKEN && (requestVo.reason()==null||requestVo.reason().isBlank())){
             throw new ServiceException(ExceptionStatus.CABINET_STATUS_BROKEN_REASON_UPDATE_FAILED);
         }
 

@@ -369,7 +369,7 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
                 .where(cabinet.status.eq(status))
                 .fetchCount();
 
-        return new PageImpl<>(cabinetList,pageable,count);
+        return new PageImpl<>(cabinetList, pageable, count);
     };
 
     @Override

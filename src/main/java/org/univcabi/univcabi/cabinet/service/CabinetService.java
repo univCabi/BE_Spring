@@ -611,15 +611,43 @@ public class CabinetService {
     // 사물함 상태를 page 객체에 담아 반환
     public Page<CabinetByStatusVo> findCabinetsByStatus(CabinetStatusVo statusVo, Pageable pageable){
 
-        Page<Cabinet> page = cabinetRepository.findCabinetByStatus(statusVo.status(),pageable);
+        Page<Cabinet> page = cabinetRepository.findCabinetByStatus(statusVo.status(), pageable);
+
+        List<Cabinet> cabinets = page.getContent();
+
+        if (cabinets.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Map<Long, CabinetPosition> positionMap =
+                cabinetPositionRepository.findByCabinetIdIn(cabinets)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                position -> position.getCabinetId().getId(),
+                                position -> position
+                        ));
+
+        List<Long> cabinetIds = cabinets.stream()
+                .map(Cabinet::getId)
+                .toList();
+
+        Map<Long, CabinetHistory> historyMap =
+                cabinetHistoryRepository.findLatestHistoriesByCabinetIds(cabinetIds).stream()
+                        .collect(Collectors.toMap(
+                                history -> history.getCabinet().getId(),
+                                history -> history
+                        ));
 
         return page.map(cabinet -> {
-            CabinetPosition position = cabinetPositionRepository.findByCabinetId(cabinet)
-                    .orElseThrow(() -> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
+            CabinetPosition position = positionMap.get(cabinet.getId());
+
+            if (position == null) {
+                throw new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND);
+            }
 
             User user = cabinet.getUserId();
             Optional<CabinetHistory> cabinetHistory =
-                cabinetHistoryRepository.findTop1ByCabinetIdOrderByCreatedAtDesc(cabinet.getId());
+                    Optional.ofNullable(historyMap.get(cabinet.getId()));
 
 
             return new CabinetByStatusVo(

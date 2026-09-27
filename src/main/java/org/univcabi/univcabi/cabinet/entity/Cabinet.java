@@ -32,7 +32,7 @@ public class Cabinet {
     @JoinColumn(name="building_id", nullable = false)
     private Building buildingId;
 
-    @ManyToOne(optional = true)
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
     private User userId;
 
