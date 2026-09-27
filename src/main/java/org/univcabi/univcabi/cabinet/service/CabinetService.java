@@ -128,7 +128,9 @@ public class CabinetService {
                 .map(cabinet -> {
 
                     CabinetPosition cabinetPosition = cabinetPositionMap.get(cabinet.getId());
-
+                    if (cabinetPosition == null){
+                        throw new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND);
+                    }
                     User user = cabinet.getUserId();
                     // 유무료는 언제든 조건이 바뀔 수 있으니 초기 선언
                     boolean isFree = true;

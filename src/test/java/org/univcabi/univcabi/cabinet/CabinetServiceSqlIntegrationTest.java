@@ -26,8 +26,13 @@ import org.univcabi.univcabi.cabinet.service.ReservationQueueManager;
 import org.univcabi.univcabi.cabinet.vo.CabinetLocationVo;
 import org.univcabi.univcabi.configs.QueryDslConfig;
 import org.univcabi.univcabi.user.entity.User;
+import org.univcabi.univcabi.exception.ExceptionStatus;
+import org.univcabi.univcabi.exception.ServiceException;
 
 import java.util.concurrent.Executor;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -49,7 +54,7 @@ class CabinetServiceSqlIntegrationTest {
     @Test
     void findCabinetsByBuildingAndFloor_printSql() {
         // N을 변경해 조회 구간에서 발생하는 SELECT를 비교할 수 있다.
-        int cabinetCount = 10;
+        int cabinetCount = 100;
         Building building = Building.builder()
                 .name(BuildingName.공학1관)
                 .floor(1)
@@ -97,6 +102,67 @@ class CabinetServiceSqlIntegrationTest {
         CabinetLocationVo requestVo = new CabinetLocationVo(BuildingName.공학1관, 1, "202600000");
         System.out.println("=== findCabinetsByBuildingAndFloor SQL 시작 (N=" + cabinetCount + ") ===");
         cabinetService.findCabinetsByBuildingAndFloor(requestVo);
+        System.out.println("=== findCabinetsByBuildingAndFloor SQL 끝 ===");
+    }
+
+    @Test
+    void findCabinetsByBuildingAndFloor_throwsWhenOnePositionIsMissing() {
+        int cabinetCount = 100;
+        Building building = Building.builder()
+                .name(BuildingName.공학1관)
+                .floor(1)
+                .section("A")
+                .width(cabinetCount)
+                .height(1)
+                .build();
+        entityManager.persist(building);
+
+        for (int i = 0; i < cabinetCount; i++) {
+            User user = User.builder()
+                    .name("SQL 조회 사용자 " + i)
+                    .affiliation("컴퓨터공학과")
+                    .isVisible(true)
+                    .build();
+            entityManager.persist(user);
+
+            Authn authn = Authn.builder()
+                    .studentNumber(String.valueOf(202600000 + i))
+                    .password("test-password")
+                    .role(AuthnRole.NORMAL)
+                    .user(user)
+                    .build();
+            entityManager.persist(authn);
+
+            Cabinet cabinet = Cabinet.builder()
+                    .buildingId(building)
+                    .userId(user)
+                    .cabinetNumber("A" + (i + 1))
+                    .status(CabinetStatus.USING)
+                    .build();
+            entityManager.persist(cabinet);
+
+            // 마지막 사물함(A100)은 위치 데이터를 만들지 않는다: Cabinet 100개, Position 99개.
+            if (i == cabinetCount - 1) {
+                continue;
+            }
+
+            // 생성용 API가 없는 엔티티는 테스트에서만 리플렉션으로 구성한다.
+            CabinetPosition position = BeanUtils.instantiateClass(CabinetPosition.class);
+            ReflectionTestUtils.setField(position, "cabinetId", cabinet);
+            ReflectionTestUtils.setField(position, "cabinetXPos", i);
+            ReflectionTestUtils.setField(position, "cabinetYPos", 0);
+            entityManager.persist(position);
+        }
+
+        entityManager.flush();
+        entityManager.clear();
+
+        CabinetLocationVo requestVo = new CabinetLocationVo(BuildingName.공학1관, 1, "202600000");
+        System.out.println("=== findCabinetsByBuildingAndFloor SQL 시작 (N=" + cabinetCount + ") ===");
+        assertThatThrownBy(() -> cabinetService.findCabinetsByBuildingAndFloor(requestVo))
+                .isInstanceOfSatisfying(ServiceException.class,
+                        exception -> assertThat(exception.getStatus())
+                                .isEqualTo(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
         System.out.println("=== findCabinetsByBuildingAndFloor SQL 끝 ===");
     }
 }

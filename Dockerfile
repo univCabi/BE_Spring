@@ -1,5 +1,5 @@
 # Use official OpenJDK base image
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk
 
 # Install curl and unzip
 RUN apt-get update && apt-get install -y curl unzip

@@ -127,14 +127,14 @@ public class UserService {
         Building building = null;
 
         // building 관련 값이 모두 있을 때 -> 조회
-        boolean havingAllValue = requestVo.buildingName() !=null
-                && requestVo.floor()!=null
-                && requestVo.section()!=null;
+        boolean havingAllValue = requestVo.buildingName() != null
+                && requestVo.floor() != null
+                && requestVo.section() != null;
 
         // building 관련 값이 일부만 있을 때 -> 잘못된 요청 예외처리
-        boolean havingAnyValue = requestVo.buildingName() !=null
-                || requestVo.floor()!=null
-                || requestVo.section()!=null;
+        boolean havingAnyValue = requestVo.buildingName() != null
+                || requestVo.floor() != null
+                || requestVo.section() != null;
 
         if(havingAllValue){
             building = buildingRepository.findBuildingByNameAndFloorAndSection(

@@ -30,7 +30,7 @@ public class Authn {
     private AuthnRole role;
 
     // Authn 엔티티가 관계의 주인이 됨 (외래 키를 가짐)
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true)  // user_id를 외래 키로 설정
     private User user;
 
@@ -42,7 +42,7 @@ public class Authn {
 
     @Column(name="deleted_at")
     @Builder.Default
-    private LocalDateTime deletedAt =null;
+    private LocalDateTime deletedAt = null;
 
     @PrePersist // 자동 현재 시간 저장
     public void prePersist(){

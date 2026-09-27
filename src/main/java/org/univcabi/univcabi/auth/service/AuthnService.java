@@ -57,14 +57,12 @@ public class AuthnService {
         Authn authn = authnRepository.findByStudentNumber(requestVo.studentNumber())
                 .orElseThrow(() -> new ServiceException(USER_NOT_FOUND));
 
-
         // 삭제된 유저인지 검사
         if (authn.getDeletedAt() != null){
             throw new ServiceException(AUTH_DELETED_USER);
         }
 
         authn.setDeletedAtBySoftDelete(LocalDateTime.now());
-        authnRepository.save(authn);
 
         AuthnDeleteVo responseVo = new AuthnDeleteVo(authn.getStudentNumber());
 
