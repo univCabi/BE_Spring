@@ -77,7 +77,7 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
                 .selectFrom(cabinet)
                 .join(cabinet.buildingId, building).fetchJoin()
                 .leftJoin(cabinet.userId, user).fetchJoin()
-                .leftJoin(cabinet.userId.authn, authn).fetchJoin()
+                .leftJoin(user.authn, authn).fetchJoin()
                 .where(
                         building.name.eq(buildingName),
                         building.floor.eq(floors)
