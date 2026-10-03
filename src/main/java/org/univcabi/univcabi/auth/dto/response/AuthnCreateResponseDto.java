@@ -7,5 +7,6 @@ import lombok.Getter;
 @Builder
 public class AuthnCreateResponseDto {
     private String studentNumber;
+    private String name;
     private String message;
 }

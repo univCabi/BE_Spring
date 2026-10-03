@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.connection.MessageListener;
@@ -117,12 +118,20 @@ public class CabinetService {
                 requestVo.floors()
         );
 
+       List<CabinetPosition> cabinetPositions = cabinetPositionRepository.findByCabinetIdIn(cabinetList);
+        Map<Long, CabinetPosition> cabinetPositionMap = cabinetPositions.stream()
+                .collect(Collectors.toMap(
+                        position -> position.getCabinetId().getId(),
+                        position -> position
+                ));
+
         return cabinetList.stream()
                 .map(cabinet -> {
 
-                    CabinetPosition cabinetPosition = cabinetPositionRepository.findByCabinetId(cabinet)
-                            .orElseThrow(()-> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
-
+                    CabinetPosition cabinetPosition = cabinetPositionMap.get(cabinet.getId());
+                    if (cabinetPosition == null){
+                        throw new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND);
+                    }
                     User user = cabinet.getUserId();
                     // 유무료는 언제든 조건이 바뀔 수 있으니 초기 선언
                     boolean isFree = true;
@@ -270,7 +279,7 @@ public class CabinetService {
                                 Building building = cabinet.getBuildingId();
 
                                 // 사용자 정보 조회
-                                Authn authn = authnRepository.findByStudentNumber(studentNumber).orElseThrow(
+                                Authn authn = authnRepository.findWithUserByStudentNumber(studentNumber).orElseThrow(
                                         () -> new ServiceException(ExceptionStatus.USER_NOT_FOUND)
                                 );
                                 User user = authn.getUser();
@@ -360,7 +369,7 @@ public class CabinetService {
                         if (cabinet.getStatus() == CabinetStatus.USING) {
                             // 성공 케이스 처리
                             Building building = cabinet.getBuildingId();
-                            Optional<Authn> authnOpt = authnRepository.findByStudentNumber(studentNumber);
+                            Optional<Authn> authnOpt = authnRepository.findWithUserByStudentNumber(studentNumber);
 
                             if (authnOpt.isPresent()) {
                                 User user = authnOpt.get().getUser();
@@ -603,15 +612,47 @@ public class CabinetService {
     // 사물함 상태를 page 객체에 담아 반환
     public Page<CabinetByStatusVo> findCabinetsByStatus(CabinetStatusVo statusVo, Pageable pageable){
 
-        Page<Cabinet> page = cabinetRepository.findCabinetByStatus(statusVo.status(),pageable);
+        Page<Cabinet> page = cabinetRepository.findCabinetByStatus(statusVo.status(), pageable);
+
+        List<Cabinet> cabinets = page.getContent();
+
+        if (cabinets.isEmpty()) {
+            return new PageImpl<>(
+                    List.of(),
+                    pageable,
+                    page.getTotalElements()
+            );
+        }
+
+        Map<Long, CabinetPosition> positionMap =
+                cabinetPositionRepository.findByCabinetIdIn(cabinets)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                position -> position.getCabinetId().getId(),
+                                position -> position
+                        ));
+
+        List<Long> cabinetIds = cabinets.stream()
+                .map(Cabinet::getId)
+                .toList();
+
+        Map<Long, CabinetHistory> historyMap =
+                cabinetHistoryRepository.findLatestHistoriesByCabinetIds(cabinetIds).stream()
+                        .collect(Collectors.toMap(
+                                history -> history.getCabinet().getId(),
+                                history -> history
+                        ));
 
         return page.map(cabinet -> {
-            CabinetPosition position = cabinetPositionRepository.findByCabinetId(cabinet)
-                    .orElseThrow(() -> new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND));
+            CabinetPosition position = positionMap.get(cabinet.getId());
+
+            if (position == null) {
+                throw new ServiceException(ExceptionStatus.CABINET_POSITION_NOT_FOUND);
+            }
 
             User user = cabinet.getUserId();
             Optional<CabinetHistory> cabinetHistory =
-                cabinetHistoryRepository.findTop1ByCabinetIdOrderByCreatedAtDesc(cabinet.getId());
+                    Optional.ofNullable(historyMap.get(cabinet.getId()));
 
 
             return new CabinetByStatusVo(

@@ -200,7 +200,7 @@ public class CabinetServiceMockTest {
         doNothing().when(cabinetRedisService).setOperationResult(eq(cabinetId), eq(studentNumber), eq(true), isNull());
 
         // Setup authn and user lookup
-        when(authnRepository.findByStudentNumber(studentNumber)).thenReturn(Optional.of(testAuthn));
+        when(authnRepository.findWithUserByStudentNumber(studentNumber)).thenReturn(Optional.of(testAuthn));
 
         // 리스너 등록 모킹 (설정만 하고 실제로 호출하지 않음)
         doNothing().when(cabinetRedisService).registerListener(anyString(), any(MessageListener.class));

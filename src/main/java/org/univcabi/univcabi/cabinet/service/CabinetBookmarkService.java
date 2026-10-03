@@ -71,7 +71,7 @@ public class CabinetBookmarkService {
         User user = userRepository.findUserByStudentNumber(requestVo.studentNumber())
                 .orElseThrow(()-> new ServiceException(ExceptionStatus.USER_NOT_FOUND));
 
-        List<CabinetBookmark> cabinetBookmarkList = cabinetBookmarkRepository.findAllByUserAndDeletedAtIsNull(user);
+        List<CabinetBookmark> cabinetBookmarkList = cabinetBookmarkRepository.findAllByUserAndDeletedAtIsNullFetchCabinetAndBuilding(user);
 
         return cabinetBookmarkList.stream()
                 .map(cabinetBookmark -> {

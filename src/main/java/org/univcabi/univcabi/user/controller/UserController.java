@@ -40,11 +40,11 @@ public class UserController {
     // isVisibility 속성 변경
     @PostMapping("/profile/me")
     @Operation(summary = "회원 본인 프로필 수정")
-    public ResponseEntity<Void> updateUserVisibility(@RequestBody @Valid UserVisibilityRequestDto requestDto,Authentication authentication){
+    public ResponseEntity<Void> updateUserVisibility(@RequestBody @Valid UserVisibilityRequestDto requestDto, Authentication authentication){
         String studentNumber = authentication.getName();
 
         // isVisibility 속성과 JWT로부터 얻은 studentNumber 로 requestVo 생성
-        UserVisibilityVo requestVo = new UserVisibilityVo(studentNumber,requestDto.getIsVisible());
+        UserVisibilityVo requestVo = new UserVisibilityVo(studentNumber, requestDto.getIsVisible());
         userService.updateUserVisibility(requestVo);
 
         return ResponseEntity.ok().build();

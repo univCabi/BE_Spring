@@ -39,6 +39,9 @@ out/
 .env
 */.env
 *.env
+.env.test
 
 ### queryDSL generated Q classes ###
 /src/main/generated/
+
+AGENTS.md

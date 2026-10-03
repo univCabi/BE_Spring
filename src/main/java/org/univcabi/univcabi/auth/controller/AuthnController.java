@@ -19,13 +19,11 @@ import org.univcabi.univcabi.auth.dto.request.AuthnLoginRequestDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnCreateResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnDeleteResponseDto;
 import org.univcabi.univcabi.auth.dto.response.AuthnLoginResponseDto;
+import org.univcabi.univcabi.auth.entity.AuthnRole;
 import org.univcabi.univcabi.auth.security.JwtTokenProvider;
 import org.univcabi.univcabi.auth.service.AuthnService;
 import org.univcabi.univcabi.auth.service.TokenService;
-import org.univcabi.univcabi.auth.vo.AuthnCreateVo;
-import org.univcabi.univcabi.auth.vo.AuthnDeleteVo;
-import org.univcabi.univcabi.auth.vo.AuthnLoginVo;
-import org.univcabi.univcabi.auth.vo.AuthnTokenGenerateVo;
+import org.univcabi.univcabi.auth.vo.*;
 import org.univcabi.univcabi.exception.ControllerException;
 
 import static org.univcabi.univcabi.exception.ExceptionStatus.AUTH_INVALID_PARAMS;
@@ -46,16 +44,23 @@ public class AuthnController {
     @Operation(summary = "회원가입")
     public ResponseEntity<AuthnCreateResponseDto> createUser(@RequestBody @Valid AuthnCreateRequestDto requestDto){
         // studentNumber, password, role 파라미터로 User 생성
-        AuthnCreateVo requestVo = new AuthnCreateVo(
+        AuthnCreateRequestVo requestVo = new AuthnCreateRequestVo(
+                requestDto.getName(),
+                requestDto.getAffiliation(),
+                requestDto.getPhoneNumber(),
                 requestDto.getStudentNumber(),
                 requestDto.getPassword(),
-                requestDto.getRole()
+                AuthnRole.NORMAL,
+                requestDto.getBuildingName(),
+                requestDto.getFloor(),
+                requestDto.getSection()
         );
 
-        AuthnCreateVo responseVo = authnService.createUser(requestVo);
+        AuthnCreateResponseVo responseVo = authnService.createUser(requestVo);
 
         AuthnCreateResponseDto responseDto = AuthnCreateResponseDto.builder()
                 .studentNumber(responseVo.studentNumber())
+                .name(requestVo.name())
                 .message("회원 생성 성공")
                 .build();
 

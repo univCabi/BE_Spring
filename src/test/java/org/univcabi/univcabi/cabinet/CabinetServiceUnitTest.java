@@ -198,7 +198,7 @@ public class CabinetServiceUnitTest {
                 .user(testUser)
                 .studentNumber(studentNumber)
                 .build();
-        lenient().when(authnRepository.findByStudentNumber(studentNumber)).thenReturn(Optional.of(authn));
+        lenient().when(authnRepository.findWithUserByStudentNumber(studentNumber)).thenReturn(Optional.of(authn));
 
         // 결과 설정 모킹
         lenient().doNothing().when(cabinetRedisService).setOperationResult(eq(cabinetId), eq(studentNumber), eq(true), isNull());
@@ -350,7 +350,7 @@ public class CabinetServiceUnitTest {
                 .user(testUser)
                 .studentNumber(studentNumber)
                 .build();
-        lenient().when(authnRepository.findByStudentNumber(studentNumber)).thenReturn(Optional.of(authn));
+        lenient().when(authnRepository.findWithUserByStudentNumber(studentNumber)).thenReturn(Optional.of(authn));
 
         // 비동기 처리 성공 결과 시뮬레이션
         lenient().doAnswer(invocation -> {

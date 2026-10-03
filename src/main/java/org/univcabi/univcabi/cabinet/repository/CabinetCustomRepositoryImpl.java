@@ -69,10 +69,15 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
     public List<Cabinet> findCabinetByBuildingAndFloor(BuildingName buildingName, int floors) {
         QCabinet cabinet = QCabinet.cabinet;
         QBuilding building = QBuilding.building;
+        QUser user = QUser.user;
+        QAuthn authn = QAuthn.authn;
+
 
         return queryFactory
                 .selectFrom(cabinet)
-                .leftJoin(building).on(cabinet.buildingId.id.eq(building.id)).fetchJoin()
+                .join(cabinet.buildingId, building).fetchJoin()
+                .leftJoin(cabinet.userId, user).fetchJoin()
+                .leftJoin(user.authn, authn).fetchJoin()
                 .where(
                         building.name.eq(buildingName),
                         building.floor.eq(floors)
@@ -349,11 +354,13 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
         QCabinet cabinet = QCabinet.cabinet;
         QBuilding building = QBuilding.building;
         QUser user = QUser.user;
+        QAuthn authn = QAuthn.authn;
 
         List<Cabinet> cabinetList = queryFactory
                 .selectFrom(cabinet)
-                .leftJoin(cabinet.buildingId,building).fetchJoin()
-                .leftJoin(cabinet.userId,user).fetchJoin()
+                .leftJoin(cabinet.buildingId, building).fetchJoin()
+                .leftJoin(cabinet.userId, user).fetchJoin()
+                .leftJoin(user.authn, authn).fetchJoin()
                 .where(cabinet.status.eq(status))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -364,7 +371,7 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
                 .where(cabinet.status.eq(status))
                 .fetchCount();
 
-        return new PageImpl<>(cabinetList,pageable,count);
+        return new PageImpl<>(cabinetList, pageable, count);
     };
 
     @Override

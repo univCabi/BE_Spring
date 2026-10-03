@@ -15,6 +15,7 @@ import org.univcabi.univcabi.cabinet.dto.response.*;
 import org.univcabi.univcabi.cabinet.entity.BuildingName;
 import org.univcabi.univcabi.cabinet.entity.CabinetPosition;
 import org.univcabi.univcabi.cabinet.entity.QBuilding;
+import org.univcabi.univcabi.cabinet.repository.CabinetPositionRepository;
 import org.univcabi.univcabi.cabinet.service.CabinetService;
 import org.univcabi.univcabi.cabinet.dto.request.*;
 import org.univcabi.univcabi.cabinet.service.CabinetUtilService;
@@ -25,6 +26,7 @@ import org.univcabi.univcabi.exception.RepositoryException;
 import org.univcabi.univcabi.exception.ServiceException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -328,7 +330,7 @@ public class CabinetController {
 
         CabinetStatusVo statusVo = new CabinetStatusVo(requestDto.getStatus());
 
-        Page<CabinetByStatusVo> page = cabinetService.findCabinetsByStatus(statusVo,pageable);
+        Page<CabinetByStatusVo> page = cabinetService.findCabinetsByStatus(statusVo, pageable);
 
         List<CabinetByStatusResponseDto> cabinetByStatusResponseDtoList = page.getContent().stream()
                 .map(vo ->CabinetByStatusResponseDto.builder()
