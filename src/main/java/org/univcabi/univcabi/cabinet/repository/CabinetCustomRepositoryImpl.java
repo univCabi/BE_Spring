@@ -354,11 +354,13 @@ public class CabinetCustomRepositoryImpl implements CabinetCustomRepository {
         QCabinet cabinet = QCabinet.cabinet;
         QBuilding building = QBuilding.building;
         QUser user = QUser.user;
+        QAuthn authn = QAuthn.authn;
 
         List<Cabinet> cabinetList = queryFactory
                 .selectFrom(cabinet)
-                .leftJoin(cabinet.buildingId,building).fetchJoin()
-                .leftJoin(cabinet.userId,user).fetchJoin()
+                .leftJoin(cabinet.buildingId, building).fetchJoin()
+                .leftJoin(cabinet.userId, user).fetchJoin()
+                .leftJoin(user.authn, authn).fetchJoin()
                 .where(cabinet.status.eq(status))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
