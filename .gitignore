@@ -43,3 +43,5 @@ out/
 
 ### queryDSL generated Q classes ###
 /src/main/generated/
+
+AGENTS.md
