@@ -17,18 +17,24 @@ import org.univcabi.univcabi.configs.QueryDslConfig;
 import org.univcabi.univcabi.user.entity.User;
 
 import java.time.LocalDateTime;
+import org.univcabi.univcabi.support.HibernateQueryCounter;
+import org.univcabi.univcabi.user.vo.UserProfileVo;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
 @Import({QueryDslConfig.class, UserService.class})
-class UserServiceSqlIntegrationTest {
+class
+UserServiceSqlIntegrationTest {
 
     @Autowired UserService userService;
     @Autowired EntityManager entityManager;
 
     @Test
-    void getUserProfileByStudentNumber_printSql() {
-        int userCount = 10; // 필요에 따라 1, 10, 100 등으로 변경
+    void getUserProfileByStudentNumber_fetchesProfileAndRentalWithTwoQueries() {
+        int userCount = 10;
+        LocalDateTime expiredAt = LocalDateTime.of(2027, 1, 1, 0, 0);
 
         // 사용자 건물과 사물함 건물을 구분해 동일 엔티티 재사용으로 조회가 가려지지 않게 한다.
         Building userBuilding = Building.builder()
@@ -76,20 +82,36 @@ class UserServiceSqlIntegrationTest {
                     .build();
             entityManager.persist(cabinet);
             entityManager.persist(CabinetHistory.createRentHistory(
-                    user, cabinet, LocalDateTime.now().plusMonths(3)));
+                    user, cabinet, expiredAt));
 
         }
 
         entityManager.flush();
         entityManager.clear();
 
+        HibernateQueryCounter queryCounter = new HibernateQueryCounter(entityManager);
+
         // 단건 서비스를 반복 호출한다. 전체 SQL 증가만으로 목록 N+1이라고 판단하지 않는다.
         for (int i = 0; i < userCount; i++) {
             entityManager.clear(); // 앞선 사용자 조회에서 로딩한 건물 등의 1차 캐시 제거
             String studentNumber = String.valueOf(202600001 + i);
-            System.out.println("=== getUserProfileByStudentNumber SQL 시작 (학번=" + studentNumber + ") ===");
-            userService.getUserProfileByStudentNumber(studentNumber);
-            System.out.println("=== getUserProfileByStudentNumber SQL 끝 (학번=" + studentNumber + ") ===");
+            queryCounter.reset();
+            UserProfileVo profile = userService.getUserProfileByStudentNumber(studentNumber);
+
+            assertThat(profile.name()).isEqualTo("프로필 SQL 조회 사용자 " + i);
+            assertThat(profile.studentNumber()).isEqualTo(studentNumber);
+            assertThat(profile.affiliation()).isEqualTo("컴퓨터공학과");
+            assertThat(profile.phoneNumber()).isEqualTo("01012345678");
+            assertThat(profile.isVisible()).isTrue();
+            assertThat(profile.rentCabinetInfoVo()).isNotNull();
+            assertThat(profile.rentCabinetInfoVo().building()).isEqualTo(BuildingName.공학1관.name());
+            assertThat(profile.rentCabinetInfoVo().floor()).isEqualTo(1);
+            assertThat(profile.rentCabinetInfoVo().cabinetNumber()).isEqualTo(101 + i);
+            assertThat(profile.rentCabinetInfoVo().status()).isEqualTo(CabinetStatus.USING.name());
+            assertThat(profile.rentCabinetInfoVo().startDate()).isNotNull();
+            assertThat(profile.rentCabinetInfoVo().endDate()).isEqualTo(expiredAt);
+            // 사용자 조회(1) + 최신 대여 이력 조회(1). 연관 정보 접근도 측정에 포함한다.
+            assertThat(queryCounter.count()).isEqualTo(2);
         }
     }
 }
